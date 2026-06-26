@@ -26,6 +26,12 @@ importers:
       '@mais-aprovacao/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@mais-aprovacao/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@mais-aprovacao/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@upstash/qstash':
         specifier: ^2.11.1
         version: 2.11.1
@@ -60,6 +66,15 @@ importers:
       '@clerk/nextjs':
         specifier: ^7.5.8
         version: 7.5.8(next@16.2.9(@babel/core@7.29.7)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@mais-aprovacao/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@mais-aprovacao/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@mais-aprovacao/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       ably:
         specifier: ^2.23.0
         version: 2.23.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -128,6 +143,50 @@ importers:
       prisma:
         specifier: ^7.8.0
         version: 7.8.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
+
+  packages/types:
+    devDependencies:
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/ui:
+    dependencies:
+      class-variance-authority:
+        specifier: ^0.7.1
+        version: 0.7.1
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      react:
+        specifier: ^19.0.0
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.4(react@19.2.4)
+      tailwind-merge:
+        specifier: ^3.6.0
+        version: 3.6.0
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.17)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+
+  packages/utils:
+    dependencies:
+      '@mais-aprovacao/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      typescript:
+        specifier: ^5
+        version: 5.9.3
 
 packages:
 
