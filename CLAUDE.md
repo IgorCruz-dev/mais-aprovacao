@@ -9,8 +9,8 @@ Leia este arquivo inteiro antes de qualquer tarefa. Ele define o contrato de des
 **Nome:** +Aprovação Web  
 **O que é:** Plataforma de cursos pré-vestibular online (ENEM, UFU, UEG e outros vestibulares)  
 **Cliente:** Cursinho presencial expandindo para atendimento nacional  
-**Prazo:** Lançamento novembro 2026  
-**Devs:** Kauã (frontend/fullstack) + Igor (backend/infra)
+**Prazo:** Lançamento novembro minimizado, go-live real em 2027/jan
+**Devs:** Kauã + Igor
 
 ---
 
