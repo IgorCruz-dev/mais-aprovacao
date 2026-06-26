@@ -1,0 +1,332 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ── CATÁLOGO ──────────────────────────────────────────────────────────────────
+
+model Course {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String    @unique
+  title         String
+  description   String?
+  thumbnail_url String?
+  trailer_url   String?
+  price_cents   Int
+  access_days   Int?      // null = vitalício
+  type          CourseType
+  is_active     Boolean   @default(false)
+  is_featured   Boolean   @default(false)
+  starts_at     DateTime? @db.Date
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  cohorts     CourseCohort[]
+  modules     CourseModule[]
+  lessons     CourseLesson[]
+  enrollments Enrollment[]
+  live_classes LiveClass[]
+  checkout_sessions CheckoutSession[]
+
+  @@map("courses")
+}
+
+enum CourseType {
+  extensivo
+  semi_extensivo
+  intensivo
+  por_materia
+  avulso
+}
+
+model CourseCohort {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id    String    @db.Uuid
+  name         String
+  starts_at    DateTime  @db.Date
+  ends_at      DateTime? @db.Date
+  max_students Int?
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+
+  course      Course       @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+
+  @@map("course_cohorts")
+}
+
+model CourseModule {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id   String   @db.Uuid
+  title       String
+  description String?
+  subject     String?
+  order_index Int      @default(0)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  course             Course             @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lessons            CourseLesson[]
+  module_completions ModuleCompletion[]
+  live_classes       LiveClass[]
+
+  @@map("course_modules")
+}
+
+model CourseLesson {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  module_id      String    @db.Uuid
+  course_id      String    @db.Uuid
+  title          String
+  description    String?
+  bunny_video_id String?
+  duration_secs  Int?
+  order_index    Int       @default(0)
+  is_preview     Boolean   @default(false)
+  is_active      Boolean   @default(true)
+  released_at    DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  module    CourseModule    @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  course    Course          @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  materials CourseMaterial[]
+  progress  LessonProgress[]
+
+  @@map("course_lessons")
+}
+
+model CourseMaterial {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lesson_id  String?      @db.Uuid
+  module_id  String?      @db.Uuid
+  title      String
+  file_url   String
+  type       MaterialType
+  created_at DateTime     @default(now())
+
+  lesson CourseLesson? @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@map("course_materials")
+}
+
+enum MaterialType {
+  pdf
+  slides
+  spreadsheet
+  other
+}
+
+// ── MATRÍCULAS ────────────────────────────────────────────────────────────────
+
+model Enrollment {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id       String           @db.Uuid
+  course_id        String           @db.Uuid
+  cohort_id        String?          @db.Uuid
+  status           EnrollmentStatus @default(pending)
+  price_paid_cents Int?
+  payment_method   String?
+  stripe_payment_id String?
+  started_at       DateTime         @default(now())
+  expires_at       DateTime?
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  course  Course        @relation(fields: [course_id], references: [id])
+  cohort  CourseCohort? @relation(fields: [cohort_id], references: [id])
+
+  @@unique([student_id, course_id])
+  @@map("enrollments")
+}
+
+enum EnrollmentStatus {
+  active
+  expired
+  cancelled
+  pending
+}
+
+// ── PROGRESSO ─────────────────────────────────────────────────────────────────
+
+model LessonProgress {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id      String   @db.Uuid
+  lesson_id       String   @db.Uuid
+  course_id       String   @db.Uuid
+  watched_pct     Int      @default(0)
+  completed       Boolean  @default(false)
+  last_watched_at DateTime @default(now())
+
+  lesson CourseLesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, lesson_id])
+  @@map("lesson_progress")
+}
+
+model ModuleCompletion {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id   String   @db.Uuid
+  module_id    String   @db.Uuid
+  course_id    String   @db.Uuid
+  completed_at DateTime @default(now())
+
+  module CourseModule @relation(fields: [module_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, module_id])
+  @@map("module_completions")
+}
+
+model Certificate {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id String   @db.Uuid
+  course_id  String   @db.Uuid
+  issued_at  DateTime @default(now())
+  cert_url   String?
+
+  @@unique([student_id, course_id])
+  @@map("certificates")
+}
+
+// ── AO VIVO ───────────────────────────────────────────────────────────────────
+
+model LiveClass {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id       String?         @db.Uuid
+  module_id       String?         @db.Uuid
+  title           String
+  scheduled_at    DateTime
+  duration_mins   Int             @default(60)
+  ivs_stream_key  String?
+  ivs_playback_url String?
+  recording_url   String?
+  status          LiveClassStatus @default(scheduled)
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
+
+  course Course?      @relation(fields: [course_id], references: [id])
+  module CourseModule? @relation(fields: [module_id], references: [id])
+
+  @@map("live_classes")
+}
+
+enum LiveClassStatus {
+  scheduled
+  live
+  ended
+}
+
+// ── PAGAMENTOS ────────────────────────────────────────────────────────────────
+
+model CheckoutSession {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id       String   @db.Uuid
+  course_id        String   @db.Uuid
+  stripe_session_id String? @unique
+  status           String   @default("pending")
+  amount_cents     Int
+  created_at       DateTime @default(now())
+
+  course Course @relation(fields: [course_id], references: [id])
+
+  @@map("checkout_sessions")
+}
+
+// ── QUESTÕES (importadas do StudyTrack) ───────────────────────────────────────
+
+model Question {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  external_id         String   @unique
+  exam_year           Int
+  subject             String?
+  discipline          String?
+  bank                QuestionBank?
+  difficulty          String?
+  title               String?
+  context             String?
+  alternatives_intro  String?
+  alternatives        Json?
+  correct_alternative String?
+  images              String[]
+  is_verified         Boolean  @default(false)
+  is_public           Boolean  @default(false)
+  status              String   @default("active")
+  metadata            Json?    @default("{}")
+  created_at          DateTime @default(now())
+
+  @@map("questions")
+}
+
+enum QuestionBank {
+  ENEM
+  UFU
+  UEG
+}
+
+// ── REPERTÓRIO (importado do StudyTrack, com pgvector) ───────────────────────
+// A coluna embedding é do tipo vector(768) — criar via SQL após migration
+// ALTER TABLE repertoire ADD COLUMN embedding vector(768);
+
+model Repertoire {
+  id        BigInt  @id @default(autoincrement())
+  content   String
+  author    String?
+  category  String?
+  // embedding: adicionado via SQL raw (pgvector não suportado pelo Prisma)
+
+  @@map("repertoire")
+}
+
+// ── REDAÇÕES (adaptadas do StudyTrack) ───────────────────────────────────────
+
+model Essay {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id           String            @db.Uuid
+  course_id            String?           @db.Uuid
+  text                 String
+  theme                String?
+  essay_type           EssayType         @default(enem)
+  status               EssayStatus       @default(pending)
+  general_comment      String?
+  total_score          Int?
+  image_url            String?
+  transcription_status String?
+  submitted_at         DateTime          @default(now())
+  corrected_at         DateTime?
+  seen_at              DateTime?
+
+  competency_scores EssayCompetencyScore[]
+
+  @@map("essays")
+}
+
+enum EssayType {
+  enem
+  ufu
+  ueg
+}
+
+enum EssayStatus {
+  pending
+  corrected
+  seen
+}
+
+model EssayCompetencyScore {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  essay_id   String @db.Uuid
+  competency Int
+  score      Int
+  comment    String?
+
+  essay Essay @relation(fields: [essay_id], references: [id], onDelete: Cascade)
+
+  @@unique([essay_id, competency])
+  @@map("essay_competency_scores")
+}
