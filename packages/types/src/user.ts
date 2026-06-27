@@ -1,11 +1,11 @@
-export type UserRole = "student" | "teacher" | "admin";
+export type UserRole = "student" | "teacher" | "manager" | "parent" | "admin";
 
 export interface UserProfile {
   id: string;
   clerk_id: string;
   email: string;
   name: string;
-  avatar_url: string | null;
   role: UserRole;
+  avatar_url: string | null;
   created_at: string;
 }

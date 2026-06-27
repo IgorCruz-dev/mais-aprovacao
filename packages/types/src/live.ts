@@ -1,4 +1,4 @@
-export type LiveStatus = "scheduled" | "live" | "ended";
+export type LiveStatus = "scheduled" | "live" | "ended" | "cancelled";
 
 export interface LiveClass {
   id: string;
