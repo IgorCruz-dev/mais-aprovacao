@@ -15,6 +15,10 @@ O principio central e simples: agentes podem acelerar implementacao, mas decisao
 
 Use nomes curtos e descritivos. Quando a branch for de task especifica, prefira `kaua/nome-da-task` ou `igor/nome-da-task`.
 
+## Excecao de setup inicial
+
+Enquanto o projeto ainda estiver na fase de setup do proprio workflow, ajustes estruturais podem ser commitados direto em `main` por decisao dos devs. Depois que `develop`, CI e branch protection estiverem ativos, essa excecao deixa de valer: `main` passa a ser protegida e todo trabalho deve entrar via PR.
+
 ## Ciclo de uma task
 
 1. Pegar a task no Jira e mover para **Em progresso**.
@@ -81,6 +85,23 @@ pnpm build
 - Rebase ou merge de `develop` para `main`: toda sexta-feira, apenas se `develop` estiver estavel.
 - Se `develop` estiver instavel na sexta, corrigir antes de promover para `main`.
 - Antes de iniciar codigo de dominio, confirmar se `develop` recebeu as mudancas mais recentes de `main` quando houver divergencia entre as duas.
+
+## Limpeza de branches
+
+- Branches de task ou feature devem ser apagadas depois que o PR for mergeado.
+- Apagar a branch remota pelo botao **Delete branch** do GitHub apos o merge.
+- Apagar a branch local depois de atualizar `develop`:
+
+```bash
+git checkout develop
+git pull
+git branch -d igor/nome-da-task
+git fetch --prune
+```
+
+- `main` e `develop` nunca sao apagadas.
+- Branch experimental deve ter nome claro, por exemplo `igor/experiment-ai-ocr`, e tambem deve ser apagada quando a decisao for nao seguir.
+- Nao manter branches antigas acumuladas: elas geram ruido, confundem PRs futuros e aumentam chance de conflito.
 
 ## Regras especificas para agentes
 
