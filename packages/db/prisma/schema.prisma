@@ -6,30 +6,86 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── USUÁRIOS ─────────────────────────────────────────────────────────────────
+
+model User {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clerk_id   String   @unique
+  email      String   @unique
+  name       String
+  role       UserRole @default(student)
+  avatar_url String?
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  taught_courses          Course[]                     @relation("CourseTeacher")
+  enrollments             Enrollment[]
+  lesson_progress         LessonProgress[]
+  module_completions      ModuleCompletion[]
+  certificates            Certificate[]
+  checkout_sessions       CheckoutSession[]
+  payments                Payment[]
+  essays                  Essay[]
+  live_classes            LiveClass[]                  @relation("LiveClassTeacher")
+  live_attendance         LiveAttendance[]
+  created_polls           Poll[]                       @relation("PollCreator")
+  poll_votes              PollVote[]
+  question_attempts       QuestionAttempt[]
+  exam_sessions           ExamSession[]
+  parent_links_as_parent  ParentStudentLink[]          @relation("ParentLinksAsParent")
+  parent_links_as_student ParentStudentLink[]          @relation("ParentLinksAsStudent")
+  announcements           Announcement[]               @relation("AnnouncementCreator")
+  gamification_points     GamificationPoint[]
+  gamification_streak     GamificationStreak?
+  gamification_titles     GamificationTitle[]
+  monthly_rankings        GamificationMonthlyRanking[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  student
+  teacher
+  manager
+  parent
+  admin
+}
+
 // ── CATÁLOGO ──────────────────────────────────────────────────────────────────
 
 model Course {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  slug          String    @unique
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String     @unique
   title         String
   description   String?
   thumbnail_url String?
   trailer_url   String?
   price_cents   Int
-  access_days   Int?      // null = vitalício
+  access_days   Int? // null = vitalício
   type          CourseType
-  is_active     Boolean   @default(false)
-  is_featured   Boolean   @default(false)
-  starts_at     DateTime? @db.Date
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  is_active     Boolean    @default(false)
+  is_featured   Boolean    @default(false)
+  starts_at     DateTime?  @db.Date
+  created_at    DateTime   @default(now()) @db.Timestamptz
+  updated_at    DateTime   @updatedAt @db.Timestamptz
+  currency      String     @default("BRL")
+  teacher_id    String?    @db.Uuid
 
-  cohorts     CourseCohort[]
-  modules     CourseModule[]
-  lessons     CourseLesson[]
-  enrollments Enrollment[]
-  live_classes LiveClass[]
-  checkout_sessions CheckoutSession[]
+  teacher            User?              @relation("CourseTeacher", fields: [teacher_id], references: [id])
+  cohorts            CourseCohort[]
+  modules            CourseModule[]
+  lessons            CourseLesson[]
+  enrollments        Enrollment[]
+  lesson_progress    LessonProgress[]
+  module_completions ModuleCompletion[]
+  certificates       Certificate[]
+  live_classes       LiveClass[]
+  checkout_sessions  CheckoutSession[]
+  payments           Payment[]
+  essay_prompts      EssayPrompt[]
+  essays             Essay[]
+  exam_sessions      ExamSession[]
+  announcements      Announcement[]
 
   @@map("courses")
 }
@@ -50,7 +106,7 @@ model CourseCohort {
   ends_at      DateTime? @db.Date
   max_students Int?
   is_active    Boolean   @default(true)
-  created_at   DateTime  @default(now())
+  created_at   DateTime  @default(now()) @db.Timestamptz
 
   course      Course       @relation(fields: [course_id], references: [id], onDelete: Cascade)
   enrollments Enrollment[]
@@ -66,11 +122,12 @@ model CourseModule {
   subject     String?
   order_index Int      @default(0)
   is_active   Boolean  @default(true)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @updatedAt @db.Timestamptz
 
   course             Course             @relation(fields: [course_id], references: [id], onDelete: Cascade)
   lessons            CourseLesson[]
+  materials          CourseMaterial[]
   module_completions ModuleCompletion[]
   live_classes       LiveClass[]
 
@@ -78,22 +135,23 @@ model CourseModule {
 }
 
 model CourseLesson {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  module_id      String    @db.Uuid
-  course_id      String    @db.Uuid
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  module_id      String       @db.Uuid
+  course_id      String       @db.Uuid
   title          String
   description    String?
   bunny_video_id String?
   duration_secs  Int?
-  order_index    Int       @default(0)
-  is_preview     Boolean   @default(false)
-  is_active      Boolean   @default(true)
-  released_at    DateTime?
-  created_at     DateTime  @default(now())
-  updated_at     DateTime  @updatedAt
+  order_index    Int          @default(0)
+  is_preview     Boolean      @default(false)
+  is_active      Boolean      @default(true)
+  released_at    DateTime?    @db.Timestamptz
+  created_at     DateTime     @default(now()) @db.Timestamptz
+  updated_at     DateTime     @updatedAt @db.Timestamptz
+  status         LessonStatus @default(pending)
 
-  module    CourseModule    @relation(fields: [module_id], references: [id], onDelete: Cascade)
-  course    Course          @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  module    CourseModule     @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  course    Course           @relation(fields: [course_id], references: [id], onDelete: Cascade)
   materials CourseMaterial[]
   progress  LessonProgress[]
 
@@ -107,9 +165,10 @@ model CourseMaterial {
   title      String
   file_url   String
   type       MaterialType
-  created_at DateTime     @default(now())
+  created_at DateTime     @default(now()) @db.Timestamptz
 
   lesson CourseLesson? @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  module CourseModule? @relation(fields: [module_id], references: [id], onDelete: Cascade)
 
   @@map("course_materials")
 }
@@ -121,24 +180,32 @@ enum MaterialType {
   other
 }
 
-// ── MATRÍCULAS ────────────────────────────────────────────────────────────────
+enum LessonStatus {
+  pending
+  processing
+  ready
+  error
+}
+
+// ── MATRÍCULAS E PAGAMENTOS ──────────────────────────────────────────────────
 
 model Enrollment {
-  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id       String           @db.Uuid
-  course_id        String           @db.Uuid
-  cohort_id        String?          @db.Uuid
-  status           EnrollmentStatus @default(pending)
-  price_paid_cents Int?
-  payment_method   String?
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String           @db.Uuid
+  course_id         String           @db.Uuid
+  cohort_id         String?          @db.Uuid
+  status            EnrollmentStatus @default(pending)
+  price_paid_cents  Int?
+  payment_method    String?
   stripe_payment_id String?
-  started_at       DateTime         @default(now())
-  expires_at       DateTime?
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @updatedAt
+  started_at        DateTime         @default(now()) @db.Timestamptz
+  expires_at        DateTime?        @db.Timestamptz
+  created_at        DateTime         @default(now()) @db.Timestamptz
+  updated_at        DateTime         @updatedAt @db.Timestamptz
 
+  student User          @relation(fields: [student_id], references: [id])
   course  Course        @relation(fields: [course_id], references: [id])
-  cohort  CourseCohort? @relation(fields: [cohort_id], references: [id])
+  cohort  CourseCohort? @relation(fields: [cohort_id], references: [id], onDelete: SetNull)
 
   @@unique([student_id, course_id])
   @@map("enrollments")
@@ -151,18 +218,63 @@ enum EnrollmentStatus {
   pending
 }
 
-// ── PROGRESSO ─────────────────────────────────────────────────────────────────
+model CheckoutSession {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String   @db.Uuid
+  course_id         String   @db.Uuid
+  stripe_session_id String?  @unique
+  status            String   @default("pending")
+  amount_cents      Int
+  created_at        DateTime @default(now()) @db.Timestamptz
+
+  student User   @relation(fields: [student_id], references: [id])
+  course  Course @relation(fields: [course_id], references: [id])
+
+  @@map("checkout_sessions")
+}
+
+model Payment {
+  id                         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id                 String        @db.Uuid
+  course_id                  String        @db.Uuid
+  stripe_payment_intent_id   String?       @unique
+  stripe_checkout_session_id String?       @unique
+  amount_cents               Int
+  currency                   String        @default("BRL")
+  status                     PaymentStatus @default(pending)
+  paid_at                    DateTime?     @db.Timestamptz
+  created_at                 DateTime      @default(now()) @db.Timestamptz
+  updated_at                 DateTime      @default(now()) @updatedAt @db.Timestamptz
+
+  student User   @relation(fields: [student_id], references: [id])
+  course  Course @relation(fields: [course_id], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  failed
+  refunded
+}
+
+// ── PROGRESSO E CERTIFICADOS ─────────────────────────────────────────────────
 
 model LessonProgress {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id      String   @db.Uuid
-  lesson_id       String   @db.Uuid
-  course_id       String   @db.Uuid
-  watched_pct     Int      @default(0)
-  completed       Boolean  @default(false)
-  last_watched_at DateTime @default(now())
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id      String    @db.Uuid
+  lesson_id       String    @db.Uuid
+  course_id       String    @db.Uuid
+  watched_pct     Int       @default(0)
+  completed       Boolean   @default(false)
+  last_watched_at DateTime  @default(now()) @db.Timestamptz
+  watched_seconds Int       @default(0)
+  completed_at    DateTime? @db.Timestamptz
 
-  lesson CourseLesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  student User         @relation(fields: [student_id], references: [id])
+  lesson  CourseLesson @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  course  Course       @relation(fields: [course_id], references: [id], onDelete: Cascade)
 
   @@unique([student_id, lesson_id])
   @@map("lesson_progress")
@@ -173,43 +285,58 @@ model ModuleCompletion {
   student_id   String   @db.Uuid
   module_id    String   @db.Uuid
   course_id    String   @db.Uuid
-  completed_at DateTime @default(now())
+  completed_at DateTime @default(now()) @db.Timestamptz
 
-  module CourseModule @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  student User         @relation(fields: [student_id], references: [id])
+  module  CourseModule @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  course  Course       @relation(fields: [course_id], references: [id], onDelete: Cascade)
 
   @@unique([student_id, module_id])
   @@map("module_completions")
 }
 
 model Certificate {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id String   @db.Uuid
-  course_id  String   @db.Uuid
-  issued_at  DateTime @default(now())
-  cert_url   String?
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id    String   @db.Uuid
+  course_id     String   @db.Uuid
+  issued_at     DateTime @default(now()) @db.Timestamptz
+  cert_url      String?
+  credential_id String   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  student User   @relation(fields: [student_id], references: [id])
+  course  Course @relation(fields: [course_id], references: [id])
 
   @@unique([student_id, course_id])
+  @@unique([credential_id])
   @@map("certificates")
 }
 
 // ── AO VIVO ───────────────────────────────────────────────────────────────────
 
 model LiveClass {
-  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  course_id       String?         @db.Uuid
-  module_id       String?         @db.Uuid
-  title           String
-  scheduled_at    DateTime
-  duration_mins   Int             @default(60)
-  ivs_stream_key  String?
-  ivs_playback_url String?
-  recording_url   String?
-  status          LiveClassStatus @default(scheduled)
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @updatedAt
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id           String?         @db.Uuid
+  module_id           String?         @db.Uuid
+  title               String
+  scheduled_at        DateTime        @db.Timestamptz
+  duration_mins       Int             @default(60)
+  ivs_stream_key      String?
+  ivs_playback_url    String?
+  recording_url       String?
+  status              LiveClassStatus @default(scheduled)
+  created_at          DateTime        @default(now()) @db.Timestamptz
+  updated_at          DateTime        @updatedAt @db.Timestamptz
+  teacher_id          String?         @db.Uuid
+  ivs_channel_arn     String?
+  ivs_ingest_endpoint String?
+  started_at          DateTime?       @db.Timestamptz
+  ended_at            DateTime?       @db.Timestamptz
 
-  course Course?      @relation(fields: [course_id], references: [id])
-  module CourseModule? @relation(fields: [module_id], references: [id])
+  course     Course?          @relation(fields: [course_id], references: [id], onDelete: SetNull)
+  module     CourseModule?    @relation(fields: [module_id], references: [id], onDelete: SetNull)
+  teacher    User?            @relation("LiveClassTeacher", fields: [teacher_id], references: [id])
+  attendance LiveAttendance[]
+  polls      Poll[]
 
   @@map("live_classes")
 }
@@ -218,46 +345,98 @@ enum LiveClassStatus {
   scheduled
   live
   ended
+  cancelled
 }
 
-// ── PAGAMENTOS ────────────────────────────────────────────────────────────────
+model LiveAttendance {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id String    @db.Uuid
+  student_id String    @db.Uuid
+  joined_at  DateTime  @default(now()) @db.Timestamptz
+  left_at    DateTime? @db.Timestamptz
 
-model CheckoutSession {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id       String   @db.Uuid
-  course_id        String   @db.Uuid
-  stripe_session_id String? @unique
-  status           String   @default("pending")
-  amount_cents     Int
-  created_at       DateTime @default(now())
+  session LiveClass @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  student User      @relation(fields: [student_id], references: [id])
 
-  course Course @relation(fields: [course_id], references: [id])
-
-  @@map("checkout_sessions")
+  @@unique([session_id, student_id])
+  @@map("live_attendance")
 }
 
-// ── QUESTÕES (importadas do StudyTrack) ───────────────────────────────────────
+model Poll {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id String   @db.Uuid
+  created_by String   @db.Uuid
+  question   String
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  session LiveClass    @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  creator User         @relation("PollCreator", fields: [created_by], references: [id])
+  options PollOption[]
+  votes   PollVote[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poll_id String @db.Uuid
+  text    String
+  order   Int
+
+  poll  Poll       @relation(fields: [poll_id], references: [id], onDelete: Cascade)
+  votes PollVote[]
+
+  @@unique([id, poll_id])
+  @@map("poll_options")
+}
+
+model PollVote {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  poll_id    String   @db.Uuid
+  option_id  String   @db.Uuid
+  student_id String   @db.Uuid
+  voted_at   DateTime @default(now()) @db.Timestamptz
+
+  poll    Poll       @relation(fields: [poll_id], references: [id], onDelete: Cascade)
+  option  PollOption @relation(fields: [option_id, poll_id], references: [id, poll_id], onDelete: Cascade)
+  student User       @relation(fields: [student_id], references: [id])
+
+  @@unique([poll_id, student_id])
+  @@map("poll_votes")
+}
+
+// ── QUESTÕES E SIMULADOS ─────────────────────────────────────────────────────
 
 model Question {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  external_id         String   @unique
+  id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  external_id         String             @unique
   exam_year           Int
   subject             String?
   discipline          String?
   bank                QuestionBank?
-  difficulty          String?
+  difficulty          QuestionDifficulty @default(medium)
   title               String?
   context             String?
   alternatives_intro  String?
   alternatives        Json?
   correct_alternative String?
-  images              String[]
-  is_verified         Boolean  @default(false)
-  is_public           Boolean  @default(false)
-  status              String   @default("active")
-  metadata            Json?    @default("{}")
-  created_at          DateTime @default(now())
+  images              String[]           @default([])
+  is_verified         Boolean            @default(false)
+  is_public           Boolean            @default(false)
+  status              String             @default("active")
+  metadata            Json?              @default("{}")
+  created_at          DateTime           @default(now()) @db.Timestamptz
+  ai_generated        Boolean            @default(false)
+  generation_prompt   String?
 
+  attempts             QuestionAttempt[]
+  exam_session_answers ExamSessionAnswer[]
+
+  @@index([subject, discipline])
+  @@index([bank])
+  @@index([difficulty])
+  @@index([status, is_verified])
   @@map("questions")
 }
 
@@ -267,38 +446,128 @@ enum QuestionBank {
   UEG
 }
 
+enum QuestionDifficulty {
+  easy
+  medium
+  hard
+}
+
+model QuestionAttempt {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id      String   @db.Uuid
+  question_id     String   @db.Uuid
+  selected_option String
+  is_correct      Boolean
+  time_spent_ms   Int?
+  attempted_at    DateTime @default(now()) @db.Timestamptz
+
+  student  User     @relation(fields: [student_id], references: [id])
+  question Question @relation(fields: [question_id], references: [id])
+
+  @@index([student_id, attempted_at])
+  @@map("question_attempts")
+}
+
+model ExamSession {
+  id                     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id             String            @db.Uuid
+  course_id              String?           @db.Uuid
+  status                 ExamSessionStatus @default(in_progress)
+  total_questions        Int
+  correct_count          Int               @default(0)
+  score                  Float?
+  is_printed             Boolean           @default(false)
+  answer_sheet_image_url String?
+  ocr_status             String?
+  started_at             DateTime          @default(now()) @db.Timestamptz
+  finished_at            DateTime?         @db.Timestamptz
+  created_at             DateTime          @default(now()) @db.Timestamptz
+  updated_at             DateTime          @default(now()) @updatedAt @db.Timestamptz
+
+  student User                @relation(fields: [student_id], references: [id])
+  course  Course?             @relation(fields: [course_id], references: [id])
+  answers ExamSessionAnswer[]
+
+  @@map("exam_sessions")
+}
+
+enum ExamSessionStatus {
+  in_progress
+  completed
+  abandoned
+}
+
+model ExamSessionAnswer {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id      String    @db.Uuid
+  question_id     String    @db.Uuid
+  selected_option String?
+  is_correct      Boolean?
+  answered_at     DateTime? @db.Timestamptz
+
+  session  ExamSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [question_id], references: [id])
+
+  @@unique([session_id, question_id])
+  @@map("exam_session_answers")
+}
+
 // ── REPERTÓRIO (importado do StudyTrack, com pgvector) ───────────────────────
-// A coluna embedding é do tipo vector(768) — criar via SQL após migration
+// A coluna embedding é do tipo vector(768) — criar via SQL após migration.
 // ALTER TABLE repertoire ADD COLUMN embedding vector(768);
 
 model Repertoire {
-  id        BigInt  @id @default(autoincrement())
-  content   String
-  author    String?
-  category  String?
+  id       BigInt  @id @default(autoincrement())
+  content  String
+  author   String?
+  category String?
   // embedding: adicionado via SQL raw (pgvector não suportado pelo Prisma)
 
   @@map("repertoire")
 }
 
-// ── REDAÇÕES (adaptadas do StudyTrack) ───────────────────────────────────────
+// ── REDAÇÕES ─────────────────────────────────────────────────────────────────
+
+model EssayPrompt {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id     String    @db.Uuid
+  title         String
+  description   String?
+  support_items Json?
+  essay_type    EssayType @default(enem)
+  is_active     Boolean   @default(true)
+  starts_at     DateTime? @db.Timestamptz
+  ends_at       DateTime? @db.Timestamptz
+  created_at    DateTime  @default(now()) @db.Timestamptz
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  course Course  @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  essays Essay[]
+
+  @@map("essay_prompts")
+}
 
 model Essay {
-  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id           String            @db.Uuid
-  course_id            String?           @db.Uuid
-  text                 String
+  id                   String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id           String      @db.Uuid
+  course_id            String?     @db.Uuid
+  text                 String?
   theme                String?
-  essay_type           EssayType         @default(enem)
-  status               EssayStatus       @default(pending)
+  essay_type           EssayType   @default(enem)
+  status               EssayStatus @default(pending)
   general_comment      String?
   total_score          Int?
   image_url            String?
   transcription_status String?
-  submitted_at         DateTime          @default(now())
-  corrected_at         DateTime?
-  seen_at              DateTime?
+  submitted_at         DateTime    @default(now()) @db.Timestamptz
+  corrected_at         DateTime?   @db.Timestamptz
+  seen_at              DateTime?   @db.Timestamptz
+  prompt_id            String?     @db.Uuid
+  transcribed_text     String?
 
+  student           User                   @relation(fields: [student_id], references: [id])
+  course            Course?                @relation(fields: [course_id], references: [id], onDelete: SetNull)
+  prompt            EssayPrompt?           @relation(fields: [prompt_id], references: [id])
   competency_scores EssayCompetencyScore[]
 
   @@map("essays")
@@ -308,17 +577,22 @@ enum EssayType {
   enem
   ufu
   ueg
+  fuvest
+  vunesp
 }
 
 enum EssayStatus {
   pending
   corrected
   seen
+  transcribing
+  correcting
+  error
 }
 
 model EssayCompetencyScore {
-  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  essay_id   String @db.Uuid
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  essay_id   String  @db.Uuid
   competency Int
   score      Int
   comment    String?
@@ -327,4 +601,109 @@ model EssayCompetencyScore {
 
   @@unique([essay_id, competency])
   @@map("essay_competency_scores")
+}
+
+// ── COMUNICAÇÃO E RESPONSÁVEIS ───────────────────────────────────────────────
+
+model ParentStudentLink {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parent_user_id  String   @db.Uuid
+  student_user_id String   @db.Uuid
+  verified        Boolean  @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz
+
+  parent  User @relation("ParentLinksAsParent", fields: [parent_user_id], references: [id], onDelete: Cascade)
+  student User @relation("ParentLinksAsStudent", fields: [student_user_id], references: [id], onDelete: Cascade)
+
+  @@unique([parent_user_id, student_user_id])
+  @@map("parent_student_links")
+}
+
+model Announcement {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  course_id    String?  @db.Uuid
+  created_by   String   @db.Uuid
+  title        String
+  body         String
+  published_at DateTime @default(now()) @db.Timestamptz
+  created_at   DateTime @default(now()) @db.Timestamptz
+
+  course  Course? @relation(fields: [course_id], references: [id], onDelete: SetNull)
+  creator User    @relation("AnnouncementCreator", fields: [created_by], references: [id])
+
+  @@map("announcements")
+}
+
+// ── WEBHOOKS ─────────────────────────────────────────────────────────────────
+
+model WebhookEvent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  source       String
+  event_id     String
+  event_type   String
+  payload      Json
+  processed_at DateTime @default(now()) @db.Timestamptz
+
+  @@unique([source, event_id])
+  @@map("webhook_events")
+}
+
+// ── GAMIFICAÇÃO ──────────────────────────────────────────────────────────────
+
+model GamificationPoint {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id  String   @db.Uuid
+  points      Int
+  origin_type String
+  origin_id   String?  @db.Uuid
+  multiplier  Float    @default(1.0)
+  earned_at   DateTime @default(now()) @db.Timestamptz
+
+  student User @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@index([student_id, earned_at])
+  @@map("gamification_points")
+}
+
+model GamificationStreak {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id         String    @unique @db.Uuid
+  current_streak     Int       @default(0)
+  longest_streak     Int       @default(0)
+  last_activity_date DateTime? @db.Date
+  shield_count       Int       @default(0)
+  created_at         DateTime  @default(now()) @db.Timestamptz
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  student User @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@map("gamification_streaks")
+}
+
+model GamificationTitle {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id String   @db.Uuid
+  title_key  String
+  title_name String
+  earned_at  DateTime @default(now()) @db.Timestamptz
+
+  student User @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, title_key])
+  @@map("gamification_titles")
+}
+
+model GamificationMonthlyRanking {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id   String   @db.Uuid
+  month        String
+  total_points Int
+  rank         Int?
+  created_at   DateTime @default(now()) @db.Timestamptz
+
+  student User @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, month])
+  @@index([month, total_points])
+  @@map("gamification_monthly_ranking")
 }
