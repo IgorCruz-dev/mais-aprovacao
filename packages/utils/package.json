@@ -6,6 +6,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "typecheck": "tsc --noEmit --skipLibCheck --module esnext --target es2022 --moduleResolution bundler src/index.ts"
+  },
   "dependencies": {
     "@mais-aprovacao/types": "workspace:*"
   },

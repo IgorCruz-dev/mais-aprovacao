@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "prebuild": "pnpm --filter @mais-aprovacao/db generate",
     "build": "tsc",
     "start": "node dist/server.js",
+    "pretypecheck": "pnpm --filter @mais-aprovacao/db generate",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
