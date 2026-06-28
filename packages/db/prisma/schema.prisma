@@ -414,8 +414,8 @@ model Question {
   exam_year           Int
   subject             String?
   discipline          String?
-  bank                QuestionBank?
-  difficulty          QuestionDifficulty @default(medium)
+  bank                String?
+  difficulty          String?
   title               String?
   context             String?
   alternatives_intro  String?
@@ -423,11 +423,15 @@ model Question {
   correct_alternative String?
   images              String[]           @default([])
   is_verified         Boolean            @default(false)
+  verified_by         String?            @db.Uuid
+  ai_reasoning        Json?
   is_public           Boolean            @default(false)
+  author_id           String?            @db.Uuid
+  testlet_group_id    String?            @db.Uuid
   status              String             @default("active")
   metadata            Json?              @default("{}")
   created_at          DateTime           @default(now()) @db.Timestamptz
-  ai_generated        Boolean            @default(false)
+  is_ai_generated     Boolean            @default(false)
   generation_prompt   String?
 
   attempts             QuestionAttempt[]
@@ -438,18 +442,6 @@ model Question {
   @@index([difficulty])
   @@index([status, is_verified])
   @@map("questions")
-}
-
-enum QuestionBank {
-  ENEM
-  UFU
-  UEG
-}
-
-enum QuestionDifficulty {
-  easy
-  medium
-  hard
 }
 
 model QuestionAttempt {
@@ -513,15 +505,15 @@ model ExamSessionAnswer {
 }
 
 // ── REPERTÓRIO (importado do StudyTrack, com pgvector) ───────────────────────
-// A coluna embedding é do tipo vector(768) — criar via SQL após migration.
-// ALTER TABLE repertoire ADD COLUMN embedding vector(768);
+// A coluna `embedding vector(768)` existe no banco mas não é declarada aqui
+// pois o tipo pgvector não é suportado pelo Prisma nativamente.
+// Ela foi criada manualmente no Supabase e é gerenciada via SQL bruto.
 
 model Repertoire {
   id       BigInt  @id @default(autoincrement())
   content  String
   author   String?
   category String?
-  // embedding: adicionado via SQL raw (pgvector não suportado pelo Prisma)
 
   @@map("repertoire")
 }

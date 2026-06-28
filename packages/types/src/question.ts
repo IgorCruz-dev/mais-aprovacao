@@ -1,5 +1,5 @@
-export type QuestionBank = "ENEM" | "UFU" | "UEG";
-export type QuestionDifficulty = "easy" | "medium" | "hard";
+export type QuestionBank = string;
+export type QuestionDifficulty = string;
 
 export interface QuestionPublic {
   id: string;
@@ -8,10 +8,10 @@ export interface QuestionPublic {
   subject: string | null;
   discipline: string | null;
   bank: QuestionBank | null;
-  difficulty: QuestionDifficulty | string | null;
+  difficulty: QuestionDifficulty | null;
   title: string | null;
   context: string | null;
   alternatives_intro: string | null;
   alternatives: object | null;
-  images: string[];
+  images: string[] | null;
 }

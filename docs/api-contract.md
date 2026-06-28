@@ -535,9 +535,9 @@ Jobs obrigatorios: `daily-streak-check` e `monthly-ranking-reset`.
 ### `GET /admin/questions`
 
 - **Auth:** `teacher` ou `admin`
-- **Query params:** `status?: string`, `is_verified?: boolean`, `ai_generated?: boolean`, `bank?: string`, `limit?: number`, `cursor?: string`
+- **Query params:** `status?: string`, `is_verified?: boolean`, `is_ai_generated?: boolean`, `bank?: string`, `limit?: number`, `cursor?: string`
 - **Request body:** nenhum
-- **Response body:** `questions: (QuestionPublic & { correct_alternative: string | null, is_verified: boolean, is_public: boolean, status: string, ai_generated: boolean, generation_prompt: string | null, metadata: object | null })[]`, `next_cursor: string | null`
+- **Response body:** `questions: (QuestionPublic & { correct_alternative: string | null, is_verified: boolean, is_public: boolean, status: string, is_ai_generated: boolean, generation_prompt: string | null, metadata: object | null })[]`, `next_cursor: string | null`
 - **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`
 
 ### `PATCH /admin/questions/:id`

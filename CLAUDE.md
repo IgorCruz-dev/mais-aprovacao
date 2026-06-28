@@ -145,6 +145,13 @@ RESEND_API_KEY                → backend
 # URLs
 NEXT_PUBLIC_API_URL           → http://localhost:3001 (dev) / Railway URL (prod)
 WEB_URL                       → http://localhost:3000 (dev) / Vercel URL (prod)
+
+# Conexão direta Postgres (psql, TablePlus, ferramentas de banco — não usado em runtime)
+DB-PASSWORD / HOST / PORT / DATABASE / USER → credenciais brutas do Supabase (apps/api/.env)
+
+# StudyTrack (banco de origem para sincronização de questões)
+STUDYTRACK_SUPABASE_URL       → Supabase do StudyTrack — só usado por scripts/import_from_studytrack.py
+STUDYTRACK_SERVICE_ROLE_KEY   → service role do StudyTrack — NUNCA expor no frontend ou apps/api
 ```
 
 ---
@@ -257,6 +264,28 @@ Novo usuário criado via Clerk → webhook `user.created` → `apps/api` cria re
 ### Packages Compartilhados
 
 Todos os packages internos exportam direto de `.ts` (sem build). O TypeScript de cada app resolve via `paths` ou `workspace:*`. **Não fazer build dos packages** — os apps compilam tudo junto.
+
+### Banco de Questões — Decisões de design
+
+- **`bank` e `difficulty` são texto livre** (`String?` no schema) — sem enum fixo para suportar qualquer vestibular (ENEM, UFU, UEG, UFG, UNESP, etc.) sem precisar alterar o schema. `difficulty` usa valores em português (`'Fácil'`, `'Médio'`, `'Difícil'`).
+- **`is_ai_generated`** (não `ai_generated`) — campo renomeado para manter paridade com o StudyTrack.
+- **`images` é nullable no banco** (migration fez `DROP NOT NULL`), mas o Prisma não suporta arrays nullable — o schema declara `String[] @default([])`. Ao ler questões importadas via Prisma, tratar `images` como possivelmente `null` em runtime.
+- **Campos `verified_by`, `ai_reasoning`, `author_id`, `testlet_group_id`** foram adicionados para paridade com StudyTrack. `testlet_group_id` agrupa questões que compartilham o mesmo texto-base.
+
+### Sincronização de questões do StudyTrack
+
+Script standalone: `scripts/import_from_studytrack.py`
+
+```bash
+# rodar do diretório raiz
+python scripts/import_from_studytrack.py          # import real
+python scripts/import_from_studytrack.py --dry-run # só lê, não escreve
+```
+
+- Importa questões com `is_verified = true` e `status = 'active'` e todo o repertório com embeddings.
+- Idempotente: usa `upsert on_conflict=external_id` para questões e `on_conflict=id` para repertório.
+- Usa `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` como destino e `STUDYTRACK_*` como origem.
+- Rodar periodicamente conforme o StudyTrack receber novas questões verificadas.
 
 ---
 
@@ -732,6 +761,8 @@ settings = Settings()  # Lança ValidationError no startup se faltar variável
 ## 14. Regras para Agentes e Devs
 
 1. **Nunca criar tabela nova** sem atualizar `packages/db/prisma/schema.prisma` e criar migration via `npx prisma migrate dev`
+   - **Nomenclatura de migration:** sempre prefixo sequencial `0001_`, `0002_`, `0003_`... com nome curto e semântico. Nunca usar timestamp no nome.
+   - Se `prisma migrate dev` não alcançar o banco (ex: ambiente remoto), aplicar o DDL via Supabase MCP e registrar manualmente em `_prisma_migrations` (a tabela é acessível via REST com service role).
 2. **Nunca criar endpoint** sem documentar em `docs/api-contract.md`
 3. **Nunca fazer merge** sem o outro dev ter revisado
 4. **Sempre rodar** `pnpm typecheck` antes de abrir PR
