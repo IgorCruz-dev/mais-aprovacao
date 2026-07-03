@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { HelpCircle, Search, ChevronDown, ChevronUp, MessageCircle } from "lucide-react"
+import { Search, ChevronDown, ChevronUp, MessageCircle } from "lucide-react"
 import { BRAND } from "@/components/navigation/StudentChrome"
 import { PageTitle, DarkHeroCard } from "@/components/student/StudentSurface"
 import { FAQS } from "@/lib/mock-data"
@@ -109,7 +109,7 @@ export default function SuportePage() {
       <div className="rounded-[18px] border border-[#EBEBEB] bg-white px-4">
         {filtered.length === 0 ? (
           <div className="py-8 text-center text-[13px] text-[#888]">
-            Nenhuma pergunta encontrada para "{search}".
+            Nenhuma pergunta encontrada para &quot;{search}&quot;.
           </div>
         ) : (
           filtered.map((faq) => (

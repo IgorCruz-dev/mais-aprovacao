@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -38,6 +38,42 @@ const MOBILE_BOTTOM = [
   { key: "ranking",   label: "Ranking",  Icon: Trophy,  href: "/ranking" },
   { key: "redacoes",  label: "Redações", Icon: PenLine,  href: "/redacoes" },
 ] as const
+
+const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed"
+const SIDEBAR_COLLAPSED_EVENT = "sidebar-collapsed-change"
+
+function subscribeMounted() {
+  return () => {}
+}
+
+function getMountedSnapshot() {
+  return true
+}
+
+function getServerMountedSnapshot() {
+  return false
+}
+
+function getSidebarCollapsedSnapshot() {
+  if (typeof window === "undefined") return false
+  return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+}
+
+function subscribeSidebarCollapsed(onStoreChange: () => void) {
+  if (typeof window === "undefined") return () => {}
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === SIDEBAR_COLLAPSED_KEY) onStoreChange()
+  }
+
+  window.addEventListener("storage", onStorage)
+  window.addEventListener(SIDEBAR_COLLAPSED_EVENT, onStoreChange)
+
+  return () => {
+    window.removeEventListener("storage", onStorage)
+    window.removeEventListener(SIDEBAR_COLLAPSED_EVENT, onStoreChange)
+  }
+}
 
 function resolveActiveKey(pathname: string): string {
   const seg = pathname.split("/").filter(Boolean)[0] ?? "dashboard"
@@ -324,22 +360,18 @@ export function StudentChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const activeKey = resolveActiveKey(pathname)
 
-  const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const stored = localStorage.getItem("sidebar_collapsed")
-    if (stored !== null) setCollapsed(stored === "true")
-  }, [])
+  const mounted = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getServerMountedSnapshot)
+  const collapsed = useSyncExternalStore(
+    subscribeSidebarCollapsed,
+    getSidebarCollapsedSnapshot,
+    getServerMountedSnapshot,
+  )
 
   const toggleCollapse = () => {
-    setCollapsed((prev) => {
-      const next = !prev
-      localStorage.setItem("sidebar_collapsed", String(next))
-      return next
-    })
+    const next = !collapsed
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next))
+    window.dispatchEvent(new Event(SIDEBAR_COLLAPSED_EVENT))
   }
 
   if (!mounted) {

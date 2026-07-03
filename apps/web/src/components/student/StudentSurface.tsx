@@ -388,7 +388,7 @@ export function InlineSVGChart({
       const l = pathRef.current.getTotalLength()
       if (l > 0) setLen(l)
     }
-  })
+  }, [data, height])
 
   if (!data.length) return null
 
