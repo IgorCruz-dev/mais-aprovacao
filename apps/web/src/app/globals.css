@@ -96,6 +96,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* ── LP brand ───────────────────────── */
+  --brand-navy:     #03050D;
+  --brand-yellow:   #F5C518;
+  --brand-white:    #FFFFFF;
+  --brand-offwhite: #F7F8FA;
+  --brand-text:     #0A0F1E;
+  --brand-muted:    #6B7A8D;
+  --brand-border:   #E5E8EF;
 }
 
 .dark {
@@ -141,9 +150,11 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
 }
 
+/* ── App keyframes (Igor) ────────────── */
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -177,3 +188,24 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* ── LP ticker ───────────────────────── */
+@keyframes ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.animate-ticker {
+  animation: ticker 30s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* ── Scrollbar ───────────────────────── */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #F7F8FA; }
+::-webkit-scrollbar-thumb { background: #F5C518; border-radius: 4px; }
