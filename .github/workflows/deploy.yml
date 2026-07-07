@@ -5,6 +5,14 @@ on:
     branches:
       - main
 
+# Pin the Vercel project explicitly. Without these, `vercel pull --yes`
+# auto-links to a new project named after the directory (created a stray
+# "web" project) instead of mais-aprovacao-web, whose Root Directory
+# (apps/web) is required for monorepo path resolution during upload.
+env:
+  VERCEL_ORG_ID: team_OoB3Npf0WDEnW9IgaQkrZuop
+  VERCEL_PROJECT_ID: prj_g9K2T6ZBcer9SqWomE2CkEW4IOs2
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,15 +34,14 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
+      # All Vercel commands run from the repository root; the CLI applies
+      # the project's Root Directory (apps/web) itself, and traced monorepo
+      # paths (node_modules/.pnpm/...) resolve against the root.
       - name: Pull Vercel Environment
-        working-directory: apps/web
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project
-        working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Deploy from the repository root so traced monorepo dependency paths
-      # (node_modules/.pnpm/..., apps/web/...) resolve during upload.
       - name: Deploy to Vercel
-        run: vercel deploy apps/web --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
