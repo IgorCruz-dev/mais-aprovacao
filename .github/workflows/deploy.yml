@@ -19,6 +19,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.node-linker=hoisted
 
+      - name: Link app dependencies to workspace root
+        run: |
+          rm -rf apps/web/node_modules
+          ln -s ../../node_modules apps/web/node_modules
+
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
@@ -29,18 +34,6 @@ jobs:
       - name: Build Project
         working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Prepare dependencies for prebuilt traces
-        run: |
-          mkdir -p apps/web/node_modules
-          if [ ! -d apps/web/node_modules/.pnpm ]; then
-            rm -f apps/web/node_modules/.pnpm
-            ln -s ../../../node_modules/.pnpm apps/web/node_modules/.pnpm
-          fi
-          if [ ! -d apps/web/node_modules/next ]; then
-            rm -f apps/web/node_modules/next
-            ln -s ../../../node_modules/next apps/web/node_modules/next
-          fi
 
       # Deploy from the repository root so traced monorepo dependency paths exist.
       - name: Deploy to Vercel
