@@ -23,10 +23,12 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Pull Vercel Environment
+        working-directory: apps/web
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project
         run: pnpm --filter @mais-aprovacao/web build
 
       - name: Deploy to Vercel
+        working-directory: apps/web
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
