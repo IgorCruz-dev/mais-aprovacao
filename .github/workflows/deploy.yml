@@ -29,6 +29,7 @@ jobs:
       - name: Build Project
         run: pnpm --filter @mais-aprovacao/web build
 
+      # Deploy from the app directory so Vercel detects the Next.js package.
       - name: Deploy to Vercel
         working-directory: apps/web
         run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
