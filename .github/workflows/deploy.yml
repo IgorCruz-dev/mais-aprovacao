@@ -17,7 +17,7 @@ jobs:
           version: 11.9.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -30,11 +30,16 @@ jobs:
         working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Link pnpm store for prebuilt traces
+      - name: Prepare dependencies for prebuilt traces
         run: |
           mkdir -p apps/web/node_modules
-          if [ ! -e apps/web/node_modules/.pnpm ]; then
+          if [ ! -d apps/web/node_modules/.pnpm ]; then
+            rm -f apps/web/node_modules/.pnpm
             ln -s ../../../node_modules/.pnpm apps/web/node_modules/.pnpm
+          fi
+          if [ ! -d apps/web/node_modules/next ]; then
+            rm -f apps/web/node_modules/next
+            ln -s ../../../node_modules/next apps/web/node_modules/next
           fi
 
       # Deploy from the repository root so traced monorepo dependency paths exist.
