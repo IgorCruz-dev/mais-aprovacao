@@ -36,6 +36,9 @@ jobs:
         working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Clean prebuilt traces
+        run: node scripts/clean-vercel-prebuilt-output.mjs apps/web/.vercel/output
+
       - name: Verify prebuilt inputs
         run: |
           test -f .env.example
