@@ -3,13 +3,13 @@
 import { useState } from "react"
 import {
   Exam, Plus, ClockCounterClockwise, TrendUp, X, Target,
-  Users, ChartBar, ArrowRight, Trophy,
+  ChartBar, ArrowRight, Trophy,
 } from "@phosphor-icons/react"
 import {
   APROVA, MODULES, BentoCard, NavyCard, PageHeader, GoldButton, Chip, ChipRow,
   GradientAreaChart, ProgressBar, SectionTitle, EmptyState, HeroMetric, Avatar, PrimaryButton, ExpandableChart,
 } from "@/components/student/StudentSurface"
-import { EXAMS, EXAM_STATS, EXAM_SUMMARY, STUDENT, RANKING_PODIUM, RANKING_NEIGHBORS } from "@/lib/mock-data"
+import { EXAMS, EXAM_STATS, EXAM_SUMMARY, RANKING_PODIUM, RANKING_NEIGHBORS } from "@/lib/mock-data"
 
 const BANKS = ["Todos", "ENEM", "UFU", "UEG", "UFG", "UNESP"]
 const scoreColor = (s: number) => (s >= 12 ? APROVA.success : s >= 8 ? APROVA.gold : APROVA.error)

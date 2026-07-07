@@ -3,12 +3,12 @@
 import { useState, useMemo } from "react"
 import Link from "next/link"
 import {
-  CaretDown, TrendUp, Fire, Target, Books, Exam, PencilLine,
+  CaretDown, TrendUp, Target, Books, Exam, PencilLine,
   Warning, ArrowRight,
 } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import {
-  APROVA, MODULES, BentoCard, NavyCard, PageHeader, SectionTitle,
+  APROVA, MODULES, BentoCard, PageHeader, SectionTitle,
   GradientAreaChart, ProgressBar, Sparkline, Chip, ChipRow, HeroMetric, EmptyState, ExpandableChart,
 } from "@/components/student/StudentSurface"
 import { STUDENT, SUBJECTS_PERFORMANCE, COMPETENCIES, EXAMS, EXAM_SUMMARY, ESSAY_TREND } from "@/lib/mock-data"

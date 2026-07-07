@@ -6,7 +6,7 @@ import {
   Highlighter,
 } from "@phosphor-icons/react"
 import {
-  APROVA, MODULES, BentoCard, NavyCard, PageHeader, GoldButton, Chip, ChipRow,
+  APROVA, MODULES, BentoCard, PageHeader, GoldButton, Chip, ChipRow,
   ProgressBar, StatusBadge, EmptyState,
 } from "@/components/student/StudentSurface"
 import { ESSAYS, ESSAY_REVIEW, type Essay } from "@/lib/mock-data"

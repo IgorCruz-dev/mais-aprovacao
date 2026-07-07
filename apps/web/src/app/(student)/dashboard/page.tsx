@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {
   Fire, ShieldStar, Star, Trophy, VideoCamera, Play,
@@ -18,14 +18,15 @@ import {
 
 // ─── Saudação dinâmica ─────────────────────────────────────────────────────────
 
+function getGreetingState() {
+  const h = new Date().getHours()
+  const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"
+  const activityToday = false // mock: ainda não estudou hoje
+  return { greeting, atRisk: h >= 20 && !activityToday }
+}
+
 function useGreeting() {
-  const [state, setState] = useState({ greeting: "Boa noite", atRisk: false })
-  useEffect(() => {
-    const h = new Date().getHours()
-    const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite"
-    const activityToday = false // mock: ainda não estudou hoje
-    setState({ greeting, atRisk: h >= 20 && !activityToday })
-  }, [])
+  const [state] = useState(getGreetingState)
   return state
 }
 

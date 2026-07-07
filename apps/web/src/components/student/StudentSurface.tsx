@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useId, useRef } from "react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
@@ -367,7 +367,7 @@ export function GradientAreaChart({
   const [drawn, setDrawn] = useState(false)
   const pathRef = useRef<SVGPathElement>(null)
   const [len, setLen] = useState(600)
-  const gid = useRef(`g${Math.random().toString(36).slice(2, 8)}`)
+  const gradientId = useId().replace(/:/g, "")
 
   useEffect(() => {
     const t = setTimeout(() => setDrawn(true), 120)
@@ -402,7 +402,7 @@ export function GradientAreaChart({
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
       <defs>
-        <linearGradient id={gid.current} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.28" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
@@ -410,7 +410,7 @@ export function GradientAreaChart({
       {[0.25, 0.5, 0.75].map((f) => (
         <line key={f} x1={padX} x2={W - padX} y1={padTop + f * (H - padTop - padBottom)} y2={padTop + f * (H - padTop - padBottom)} stroke="#EEF1F7" strokeWidth="1" />
       ))}
-      <path d={area} fill={`url(#${gid.current})`} opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.6s ease 0.3s" }} />
+      <path d={area} fill={`url(#${gradientId})`} opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.6s ease 0.3s" }} />
       <path
         ref={pathRef}
         d={line}

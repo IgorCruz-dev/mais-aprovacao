@@ -8,8 +8,8 @@ import {
   NotePencil, ArrowRight, Timer, Users, FunnelSimple,
 } from "@phosphor-icons/react"
 import {
-  APROVA, MODULES, BentoCard, NavyCard, Segmented, Chip, ChipRow,
-  ProgressBar, PrimaryButton, showToast, faixaColor,
+  APROVA, BentoCard, NavyCard, Segmented, Chip, ChipRow,
+  PrimaryButton, showToast, faixaColor,
 } from "@/components/student/StudentSurface"
 import { QUESTIONS, QUESTION_META, type Question } from "@/lib/mock-data"
 
@@ -283,8 +283,18 @@ export default function QuestoesPage() {
       setResults((r) => { const n = [...r]; n[idx] = ok; return n })
     }
   }
-  const handleStrike = (id: string) => setStruck((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
-  const toggleMark = () => setMarked((m) => { const n = new Set(m); n.has(question.id) ? n.delete(question.id) : n.add(question.id); return n })
+  const handleStrike = (id: string) => setStruck((s) => {
+    const n = new Set(s)
+    if (n.has(id)) n.delete(id)
+    else n.add(id)
+    return n
+  })
+  const toggleMark = () => setMarked((m) => {
+    const n = new Set(m)
+    if (n.has(question.id)) n.delete(question.id)
+    else n.add(question.id)
+    return n
+  })
 
   const handleNext = () => {
     if (mode === "timer" && selected) setResults((r) => { const n = [...r]; n[idx] = selected === question.correctId; return n })

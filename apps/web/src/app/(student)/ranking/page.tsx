@@ -1,21 +1,19 @@
 "use client"
 
-import { useState } from "react"
 import {
-  Trophy, Crown, CaretDown, TrendUp, TrendDown, Minus,
+  Crown, CaretDown, TrendUp, TrendDown, Minus,
   CaretUp, CaretDown as CaretDownIcon, Target,
 } from "@phosphor-icons/react"
 import {
   APROVA, BentoCard, NavyCard, PageHeader, MilestoneBar,
   SectionTitle, Avatar, Medal,
 } from "@/components/student/StudentSurface"
-import { STUDENT, RANKING_PODIUM, RANKING_NEIGHBORS, RANKING_HISTORY, RACE, RACE_MILESTONES } from "@/lib/mock-data"
+import { RANKING_PODIUM, RANKING_NEIGHBORS, RANKING_HISTORY, RACE, RACE_MILESTONES } from "@/lib/mock-data"
 
 // ─── Pódio ─────────────────────────────────────────────────────────────────────
 
-function Podium() {
-  const [first, second, third] = RANKING_PODIUM
-  const Col = ({ p, place, h, big }: { p: typeof RANKING_PODIUM[0]; place: 1 | 2 | 3; h: number; big?: boolean }) => (
+function PodiumColumn({ p, place, h, big }: { p: typeof RANKING_PODIUM[0]; place: 1 | 2 | 3; h: number; big?: boolean }) {
+  return (
     <div className="flex flex-1 flex-col items-center justify-end gap-2">
       {place === 1 && <Crown size={26} weight="fill" color={APROVA.gold} style={{ animation: "floatY 3s ease-in-out infinite" }} />}
       <div className="relative">
@@ -29,12 +27,16 @@ function Podium() {
       <div className="w-full rounded-t-xl" style={{ height: h, background: "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))", borderTop: `2px solid ${place === 1 ? APROVA.gold : "rgba(255,255,255,0.2)"}` }} />
     </div>
   )
+}
+
+function Podium() {
+  const [first, second, third] = RANKING_PODIUM
   return (
     <NavyCard halftone="gold">
       <div className="mx-auto flex max-w-md items-end gap-3 px-2 pt-4">
-        <Col p={second} place={2} h={64} />
-        <Col p={first} place={1} h={92} big />
-        <Col p={third} place={3} h={46} />
+        <PodiumColumn p={second} place={2} h={64} />
+        <PodiumColumn p={first} place={1} h={92} big />
+        <PodiumColumn p={third} place={3} h={46} />
       </div>
     </NavyCard>
   )
@@ -133,7 +135,7 @@ function History() {
 }
 
 export default function RankingPage() {
-  const [period, setPeriod] = useState("Julho 2026")
+  const period = "Julho 2026"
   return (
     <div className="mx-auto max-w-[1080px] px-4 pt-5 lg:px-8 lg:pt-7">
       <PageHeader
