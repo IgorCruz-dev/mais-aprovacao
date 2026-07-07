@@ -13,17 +13,15 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          version: 11.9.0
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --config.node-linker=hoisted
-
-      - name: Link app dependencies to workspace root
-        run: |
-          rm -rf apps/web/node_modules
-          ln -s ../../node_modules apps/web/node_modules
-          cp .env.example apps/web/.env.example
+        run: pnpm install --frozen-lockfile
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -36,17 +34,7 @@ jobs:
         working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Clean prebuilt traces
-        run: node scripts/clean-vercel-prebuilt-output.mjs apps/web/.vercel/output
-
-      - name: Verify prebuilt inputs
-        run: |
-          test -f .env.example
-          test -f apps/web/.env.example
-          test -d apps/web/node_modules/next
-          test -f apps/web/node_modules/@swc/helpers/package.json
-          find apps/web/.vercel/output -maxdepth 3 -type f | sort | head -120
-
-      # Deploy from the repository root so traced monorepo dependency paths exist.
+      # Deploy from the repository root so traced monorepo dependency paths
+      # (node_modules/.pnpm/..., apps/web/...) resolve during upload.
       - name: Deploy to Vercel
         run: vercel deploy apps/web --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
