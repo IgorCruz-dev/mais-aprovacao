@@ -30,6 +30,13 @@ jobs:
         working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Link pnpm store for prebuilt traces
+        run: |
+          mkdir -p apps/web/node_modules
+          if [ ! -e apps/web/node_modules/.pnpm ]; then
+            ln -s ../../../node_modules/.pnpm apps/web/node_modules/.pnpm
+          fi
+
       # Deploy from the repository root so traced monorepo dependency paths exist.
       - name: Deploy to Vercel
         run: vercel deploy apps/web --prebuilt --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
