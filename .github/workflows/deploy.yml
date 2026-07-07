@@ -23,6 +23,7 @@ jobs:
         run: |
           rm -rf apps/web/node_modules
           ln -s ../../node_modules apps/web/node_modules
+          cp .env.example apps/web/.env.example
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
@@ -34,6 +35,14 @@ jobs:
       - name: Build Project
         working-directory: apps/web
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Verify prebuilt inputs
+        run: |
+          test -f .env.example
+          test -f apps/web/.env.example
+          test -d apps/web/node_modules/next
+          test -f apps/web/node_modules/@swc/helpers/package.json
+          find apps/web/.vercel/output -maxdepth 3 -type f | sort | head -120
 
       # Deploy from the repository root so traced monorepo dependency paths exist.
       - name: Deploy to Vercel
