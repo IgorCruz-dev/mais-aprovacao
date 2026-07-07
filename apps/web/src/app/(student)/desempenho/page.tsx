@@ -1,240 +1,151 @@
 "use client"
 
-import { useState } from "react"
-import { Calendar, Flame, TrendingUp } from "lucide-react"
-import { BRAND } from "@/components/navigation/StudentChrome"
-import { PageTitle, EditorialStats, InlineSVGChart, AnimatedProgressBar, SectionTitle } from "@/components/student/StudentSurface"
-import { STUDENT, SUBJECTS_PERFORMANCE, COMPETENCIES, EXAMS } from "@/lib/mock-data"
+import { useState, useMemo } from "react"
+import Link from "next/link"
+import {
+  CaretDown, TrendUp, Fire, Target, Books, Exam, PencilLine,
+  Warning, ArrowRight,
+} from "@phosphor-icons/react"
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
+import {
+  APROVA, MODULES, BentoCard, NavyCard, PageHeader, SectionTitle,
+  GradientAreaChart, ProgressBar, Sparkline, Chip, ChipRow, HeroMetric, EmptyState, ExpandableChart,
+} from "@/components/student/StudentSurface"
+import { STUDENT, SUBJECTS_PERFORMANCE, COMPETENCIES, EXAMS, EXAM_SUMMARY, ESSAY_TREND } from "@/lib/mock-data"
 
-type Period = "7d" | "15d" | "30d" | "90d"
-type ModuleKey = "questoes" | "simulados" | "redacoes"
+type Serie = "questoes" | "simulados" | "redacoes"
+type Range = "7d" | "30d" | "90d"
 
-const MODULE_CONFIG: Record<ModuleKey, { label: string; color: string }> = {
-  questoes: { label: "Questões", color: "#185FA5" },
-  simulados: { label: "Simulados", color: "#D97706" },
-  redacoes: { label: "Redações", color: "#534AB7" },
+const SERIES: Record<Serie, { label: string; color: string; icon: PhosphorIcon; data: number[]; hero: string; unit?: string }> = {
+  questoes: { label: "Questões", color: MODULES.questoes, icon: Books, data: [12, 18, 9, 22, 27, 19, 31], hero: "248", unit: "resolvidas" },
+  simulados: { label: "Simulados", color: MODULES.simulados, icon: Exam, data: [...EXAMS].reverse().map((e) => e.score), hero: `${EXAM_SUMMARY.avg}%`, unit: "média" },
+  redacoes: { label: "Redações", color: MODULES.redacoes, icon: PencilLine, data: ESSAY_TREND, hero: "780", unit: "última nota" },
 }
 
-function compColor(pct: number) {
-  return pct >= 75 ? "#0F6E56" : pct >= 60 ? "#D97706" : "#D14000"
+const compGradient = (pct: number) => (pct >= 80 ? APROVA.success : pct >= 65 ? APROVA.gold : APROVA.error)
+
+function CompBar({ pct, color }: { pct: number; color: string }) {
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "#F0F2F7" }}>
+      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${APROVA.error}, ${APROVA.gold} 55%, ${color})`, transition: "width 0.7s ease" }} />
+    </div>
+  )
 }
 
 export default function DesempenhoPage() {
-  const [period, setPeriod] = useState<Period>("30d")
-  const [activeModules, setActiveModules] = useState<Set<ModuleKey>>(new Set(["questoes", "simulados"]))
+  const [serie, setSerie] = useState<Serie>("questoes")
+  const [range, setRange] = useState<Range>("30d")
   const [essayBank, setEssayBank] = useState("ENEM")
 
-  const toggleModule = (m: ModuleKey) => {
-    setActiveModules((prev) => {
-      const next = new Set(prev)
-      if (next.has(m)) { if (next.size > 1) next.delete(m) }
-      else next.add(m)
-      return next
-    })
-  }
+  const s = SERIES[serie]
+  const essayAvg = 750, essayLast = 780, essayBest = 780
 
-  const avgEssay = 750
-  const lastEssay = 780
-  const bestEssay = 780
-  const medianEssay = 750
-
-  const avgScore = EXAMS.reduce((a, b) => a + b.score, 0) / EXAMS.length
-  const bestScore = Math.max(...EXAMS.map((e) => e.score))
+  // ordenar matérias por prioridade (menor precisão primeiro)
+  const subjects = useMemo(() => {
+    return [...SUBJECTS_PERFORMANCE]
+      .map((x) => ({ ...x, pct: x.attempts ? (x.correct / x.attempts) * 100 : 0, spark: [x.correct, x.attempts / 8, x.correct * 1.5, x.attempts / 5, x.correct * 2].map((n) => Math.max(1, n)) }))
+      .sort((a, b) => a.pct - b.pct)
+  }, [])
 
   return (
-    <div className="max-w-[760px] mx-auto px-4 pt-5 pb-8">
-      <div className="flex items-start justify-between mb-4">
-        <PageTitle title="Meu Desempenho" subtitle="Redações, simulados e hábitos." />
-        <span className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-[700] mt-1" style={{ background: "#EFF4FF", color: BRAND }}>
-          <Calendar size={12} /> Julho 2026
-        </span>
+    <div className="mx-auto max-w-[1080px] px-4 pt-5 lg:px-8 lg:pt-7">
+      <PageHeader
+        title="Meu Desempenho"
+        kicker="Visão geral"
+        subtitle="Onde você está forte, onde priorizar."
+        action={<button className="inline-flex items-center gap-1.5 rounded-full border border-[#E6E9F0] bg-white px-3.5 py-2 text-[12px] font-bold" style={{ color: APROVA.ink }}>Julho 2026 <CaretDown size={13} /></button>}
+      />
+
+      {/* 5 cards resumo — variados */}
+      <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <BentoCard className="lg:col-span-2"><HeroMetric value={`#${STUDENT.rank}`} label="Ranking da turma" size={44} color={APROVA.blue} /><p className="mt-1 text-[11px]" style={{ color: APROVA.inkMuted }}>de {STUDENT.totalStudents} alunos ativos</p></BentoCard>
+        <BentoCard><HeroMetric value={STUDENT.points} label="Pontos no mês" size={36} color={APROVA.gold} /></BentoCard>
+        <BentoCard><HeroMetric value={`${STUDENT.streak}d`} label="Ofensiva" size={36} color={APROVA.streak} /></BentoCard>
+        <BentoCard><HeroMetric value={essayAvg} label="Média redação" size={36} color={APROVA.success} /></BentoCard>
+        <BentoCard><HeroMetric value={EXAM_SUMMARY.done} label="Simulados" size={36} color={APROVA.ink} /></BentoCard>
+        <BentoCard><HeroMetric value="248" label="Questões" size={36} color={MODULES.questoes} /></BentoCard>
       </div>
 
-      {/* Stats */}
-      <div className="mb-5">
-        <EditorialStats items={[
-          { value: `#${STUDENT.rank}`, label: "ranking", color: BRAND },
-          { value: `${STUDENT.points}`, label: "pontos", color: "#D97706", sub: "200 pts p/ Estrategista" },
-          { value: String(avgEssay), label: "redação", color: "#0F6E56" },
-          { value: String(EXAMS.length), label: "simulados", color: "#111" },
-          { value: `${STUDENT.streak}d`, label: "ofensiva", color: "#E84A00" },
-        ]} />
-      </div>
-
-      {/* Evolution chart */}
-      <div className="rounded-[18px] border border-[#EBEBEB] bg-white p-4 mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[13px] font-[800] text-[#111]">Evolução Recente</p>
+      {/* evolução recente */}
+      <BentoCard className="mb-5">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2"><TrendUp size={16} weight="bold" color={s.color} /><SectionTitle title="Evolução recente" /></div>
+          <ChipRow>{(["7d", "30d", "90d"] as Range[]).map((r) => <Chip key={r} active={range === r} onClick={() => setRange(r)}>{r}</Chip>)}</ChipRow>
         </div>
+        <div className="mb-4"><ChipRow>{(Object.keys(SERIES) as Serie[]).map((k) => <Chip key={k} active={serie === k} onClick={() => setSerie(k)} color={SERIES[k].color}>{SERIES[k].label}</Chip>)}</ChipRow></div>
+        <div className="mb-2"><HeroMetric value={s.hero} unit={s.unit} label={s.label} size={40} color={s.color} /></div>
+        <ExpandableChart data={s.data} color={s.color}>
+          <GradientAreaChart data={s.data} color={s.color} height={140} valueFormat={(v) => (serie === "simulados" ? `${v.toFixed(0)}%` : String(Math.round(v)))} />
+        </ExpandableChart>
+      </BentoCard>
 
-        {/* Period chips */}
-        <div className="flex gap-2 mb-3 overflow-x-auto scrollbar-none">
-          {(["7d", "15d", "30d", "90d"] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className="flex-shrink-0 rounded-full px-3 py-1 text-[12px] font-[700] transition-colors"
-              style={{ background: period === p ? BRAND : "#F5F5F5", color: period === p ? "white" : "#888" }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+      {/* redação em profundidade */}
+      <BentoCard className="mb-5">
+        <div className="mb-3 flex items-center gap-2"><PencilLine size={16} weight="bold" color={MODULES.redacoes} /><SectionTitle title="Redação em profundidade" actionLabel="Ver redações" /></div>
+        <div className="mb-4"><ChipRow>{["ENEM", "UFU", "UEG"].map((b) => <Chip key={b} active={essayBank === b} onClick={() => setEssayBank(b)} color={MODULES.redacoes}>{b}</Chip>)}</ChipRow></div>
 
-        {/* Module type chips */}
-        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none">
-          {(Object.entries(MODULE_CONFIG) as [ModuleKey, { label: string; color: string }][]).map(([key, { label, color }]) => {
-            const active = activeModules.has(key)
-            return (
-              <button
-                key={key}
-                onClick={() => toggleModule(key)}
-                className="flex-shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-[700] transition-colors border"
-                style={{
-                  background: active ? color : "#F5F5F5",
-                  color: active ? "white" : "#888",
-                  borderColor: active ? color : "#EBEBEB",
-                }}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ background: active ? "rgba(255,255,255,0.7)" : color }} />
-                {label}
-              </button>
-            )
-          })}
-        </div>
-
-        <InlineSVGChart data={EXAMS.map((e) => e.score)} color={BRAND} height={80} />
-      </div>
-
-      {/* Essay depth */}
-      <div className="rounded-[18px] border border-[#EBEBEB] bg-white p-4 mb-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[13px] font-[800] text-[#111]">Redação em Profundidade</p>
-          <button className="text-[11px] font-[700]" style={{ color: BRAND }}>Ver redações →</button>
-        </div>
-
-        {/* Bank chips */}
-        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-none">
-          {["ENEM", "UFU", "UEG"].map((b) => (
-            <button
-              key={b}
-              onClick={() => setEssayBank(b)}
-              className="flex-shrink-0 rounded-full px-3 py-1 text-[11px] font-[700] transition-colors"
-              style={{ background: essayBank === b ? "#534AB7" : "#F5F5F5", color: essayBank === b ? "white" : "#888" }}
-            >
-              {b}
-            </button>
-          ))}
-        </div>
-
-        {/* 2x2 grid */}
-        <div className="grid grid-cols-2 border border-[#F0F0F0] rounded-[12px] overflow-hidden mb-4">
-          {[
-            { label: "Média", value: `${avgEssay}/1000` },
-            { label: "Última Nota", value: `${lastEssay}/1000` },
-            { label: "Melhor Nota", value: `${bestEssay}/1000` },
-            { label: "Mediana", value: `${medianEssay}/1000` },
-          ].map((s, i) => (
-            <div
-              key={s.label}
-              className="p-3"
-              style={{
-                borderRight: i % 2 === 0 ? "1px solid #F0F0F0" : undefined,
-                borderBottom: i < 2 ? "1px solid #F0F0F0" : undefined,
-              }}
-            >
-              <p className="text-[9px] font-[500] uppercase tracking-wide text-[#AAAAAA] mb-1">{s.label}</p>
-              <p className="text-[18px] font-black text-[#111]">{s.value}</p>
+        {essayBank === "ENEM" ? (
+          <>
+            <div className="mb-4 grid grid-cols-3 gap-3">
+              {[{ l: "Média", v: essayAvg }, { l: "Última", v: essayLast }, { l: "Melhor", v: essayBest }].map((x) => (
+                <div key={x.l} className="rounded-2xl bg-[#F6F7FB] p-3 text-center">
+                  <p className="font-display text-[24px] font-extrabold tabular" style={{ color: APROVA.ink }}>{x.v}</p>
+                  <p className="text-[10px] uppercase tracking-wide" style={{ color: APROVA.inkMuted }}>{x.l} /1000</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        {/* Competencies */}
-        <p className="text-[13px] font-[800] text-[#111] mb-3">Competências</p>
-        <div className="flex flex-col divide-y divide-[#F0F0F0]">
-          {COMPETENCIES.map((c) => {
-            const pct = (c.score / c.max) * 100
-            const color = compColor(pct)
-            return (
-              <div key={c.label} className="py-2.5">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[12px] font-[700] text-[#111]">{c.label} — {c.name}</span>
-                  <span className="text-[12px] font-[800]" style={{ color }}>{c.score}/{c.max}</span>
-                </div>
-                <AnimatedProgressBar pct={pct} color={color} height={4} />
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Highlight pills */}
-        <div className="flex gap-2 mt-3">
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-[700]" style={{ background: "#FFF9E6", color: "#D97706" }}>↓ C2 · 70%</span>
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-[700]" style={{ background: "#ECFDF5", color: "#0F6E56" }}>↑ C1 · 80%</span>
-        </div>
-      </div>
-
-      {/* Subject performance */}
-      <div className="mb-5">
-        <SectionTitle title="Performance por Matéria" />
-        <div className="mt-3 flex flex-col gap-3">
-          {SUBJECTS_PERFORMANCE.map((s) => {
-            const pct = s.attempts > 0 ? (s.correct / s.attempts) * 100 : 0
-            return (
-              <div key={s.subject} className="rounded-[14px] border border-[#EBEBEB] bg-white p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[13px] font-[700] text-[#111]">{s.subject}</p>
-                  <p className="text-[11px] text-[#888]">{s.attempts} tentativas · {s.correct} acertos</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-[#888] w-14">Precisão</span>
-                    <div className="flex-1">
-                      <AnimatedProgressBar pct={pct} color={s.color} height={5} />
+            <div className="flex flex-col gap-2.5">
+              {COMPETENCIES.map((c) => {
+                const pct = (c.score / c.max) * 100
+                return (
+                  <div key={c.label}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-[12px] font-bold" style={{ color: APROVA.ink }}>{c.label} · {c.name}</span>
+                      <span className="text-[12px] font-extrabold tabular" style={{ color: compGradient(pct) }}>{c.score}/{c.max}</span>
                     </div>
-                    <span className="text-[10px] font-[700] w-8 text-right" style={{ color: s.color }}>{pct.toFixed(1)}%</span>
+                    <CompBar pct={pct} color={compGradient(pct)} />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] text-[#888] w-14">Volume</span>
-                    <div className="flex-1">
-                      <AnimatedProgressBar pct={Math.min(100, (s.attempts / 200) * 100)} color="#FFD600" height={5} />
-                    </div>
-                    <span className="text-[10px] font-[700] text-[#888] w-8 text-right">{s.attempts}</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+                )
+              })}
+            </div>
+          </>
+        ) : (
+          <EmptyState icon={PencilLine} title={`Sem redações ${essayBank} ainda`} text={`Envie sua primeira redação ${essayBank} para ver a análise por competência aqui.`} cta="Escrever agora" />
+        )}
+      </BentoCard>
 
-      {/* Support cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-[18px] border border-[#EBEBEB] bg-white p-4">
-          <p className="text-[11px] font-[700] uppercase tracking-wide text-[#AAAAAA] mb-3">Simulados</p>
-          {[
-            { l: "Melhor TRI", v: `${bestScore.toFixed(1)}%`, c: "#D97706" },
-            { l: "Média recente", v: `${avgScore.toFixed(1)}%`, c: "#D14000" },
-            { l: "Total", v: `${EXAMS.length}`, c: "#111" },
-          ].map((s) => (
-            <div key={s.l} className="flex justify-between items-center py-1">
-              <span className="text-[11px] text-[#888]">{s.l}</span>
-              <span className="text-[12px] font-[800]" style={{ color: s.c }}>{s.v}</span>
-            </div>
+      {/* performance por matéria — ordenado por prioridade */}
+      <div>
+        <SectionTitle title="Performance por matéria" kicker="Prioridade primeiro" />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {subjects.map((sub, i) => (
+            <BentoCard key={sub.subject} className="p-4">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: sub.color }} />
+                  <p className="text-[13px] font-extrabold" style={{ color: APROVA.ink }}>{sub.subject}</p>
+                </div>
+                {i === 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9.5px] font-black uppercase" style={{ background: "#FDECEC", color: APROVA.error }}>
+                    <Warning size={10} weight="fill" /> Prioridade de estudo
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <ProgressBar pct={sub.pct} color={sub.color} height={6} />
+                  <p className="mt-1 text-[10.5px]" style={{ color: APROVA.inkMuted }}>{sub.attempts} tentativas · {sub.correct} acertos</p>
+                </div>
+                <Sparkline data={sub.spark} color={sub.color} />
+                <span className="w-11 text-right font-display text-[17px] font-extrabold tabular" style={{ color: sub.color }}>{sub.pct.toFixed(0)}%</span>
+              </div>
+              {i === 0 && (
+                <Link href="/questoes" className="mt-3 inline-flex items-center gap-1.5 text-[11.5px] font-bold" style={{ color: APROVA.blue }}>
+                  <Target size={13} weight="fill" /> Treinar {sub.subject} agora <ArrowRight size={11} weight="bold" />
+                </Link>
+              )}
+            </BentoCard>
           ))}
-        </div>
-        <div className="rounded-[18px] border border-[#EBEBEB] bg-white p-4">
-          <p className="text-[11px] font-[700] uppercase tracking-wide text-[#AAAAAA] mb-3">Ranking</p>
-          {[
-            { l: "Posição", v: `#${STUDENT.rank}`, c: BRAND },
-            { l: "Pontos", v: `${STUDENT.points}`, c: "#D97706" },
-          ].map((s) => (
-            <div key={s.l} className="flex justify-between items-center py-1">
-              <span className="text-[11px] text-[#888]">{s.l}</span>
-              <span className="text-[12px] font-[800]" style={{ color: s.c }}>{s.v}</span>
-            </div>
-          ))}
-          <p className="text-[10px] mt-2" style={{ color: BRAND }}>200 pts para Estrategista</p>
         </div>
       </div>
     </div>

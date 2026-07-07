@@ -1,289 +1,188 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import type { LucideIcon } from "lucide-react"
-import { X } from "lucide-react"
-import { BRAND } from "@/components/navigation/StudentChrome"
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
-// ─── Decoration ─────────────────────────────────────────────────────────────
+// ─── Design tokens (+aprovação) ──────────────────────────────────────────────
 
-export function ConcentricDecoration() {
-  return (
-    <svg
-      className="pointer-events-none absolute"
-      style={{ top: -16, right: -16, opacity: 0.15 }}
-      width={130}
-      height={130}
-      viewBox="0 0 130 130"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle cx="65" cy="65" r="63" stroke={BRAND} strokeWidth="1.5" />
-      <circle cx="65" cy="65" r="39" stroke={BRAND} strokeWidth="1" />
-      <circle cx="65" cy="65" r="14" fill={BRAND} />
-    </svg>
-  )
+export const APROVA = {
+  blue: "#1B4DE4",
+  blueBright: "#4D7CFF",
+  blueSoft: "#E9EEFD",
+  gold: "#FFC529",
+  goldDeep: "#B78600",
+  navy: "#060E27",
+  navy2: "#101E45",
+  surface: "#F4F6FB",
+  ink: "#0A0F1E",
+  inkMuted: "#5D6678",
+  streak: "#F2600C",
+  success: "#0FA968",
+  successDeep: "#0A8754",
+  error: "#E23030",
+} as const
+
+export const MODULES = {
+  questoes: "#1B4DE4",
+  simulados: "#D97706",
+  redacoes: "#6C4BD9",
+  aulas: "#0E8A5F",
+} as const
+
+export function faixaColor(pct: number) {
+  return pct >= 70 ? APROVA.success : pct >= 40 ? APROVA.gold : APROVA.error
 }
 
-// ─── PageTitle ───────────────────────────────────────────────────────────────
+// ─── useCountUp ──────────────────────────────────────────────────────────────
 
-export function PageTitle({
-  title,
-  subtitle,
-  action,
-}: {
-  title: string
-  subtitle?: string
-  action?: React.ReactNode
-}) {
-  return (
-    <header className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <h1 className="text-[28px] font-black leading-tight text-[#111]" style={{ letterSpacing: "-1px" }}>
-          {title}
-        </h1>
-        {subtitle && <p className="mt-1 text-[13px] text-[#AAAAAA]">{subtitle}</p>}
-      </div>
-      {action}
-    </header>
-  )
+export function useCountUp(target: number, durationMs = 900, decimals = 0) {
+  const [value, setValue] = useState(0)
+  const raf = useRef<number | null>(null)
+  useEffect(() => {
+    const start = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / durationMs)
+      const eased = 1 - Math.pow(1 - p, 3)
+      setValue(target * eased)
+      if (p < 1) raf.current = requestAnimationFrame(tick)
+    }
+    raf.current = requestAnimationFrame(tick)
+    return () => { if (raf.current) cancelAnimationFrame(raf.current) }
+  }, [target, durationMs])
+  return decimals > 0 ? value.toFixed(decimals) : Math.round(value).toLocaleString("pt-BR")
 }
 
-// ─── Pill ────────────────────────────────────────────────────────────────────
+// ─── BentoCard ───────────────────────────────────────────────────────────────
 
-export function Pill({
+export function BentoCard({
   children,
-  color = BRAND,
-  background = "#EFF4FF",
-  border,
-  className = "",
+  className,
+  hover = false,
   onClick,
+  as = "div",
+  style,
 }: {
   children: React.ReactNode
-  color?: string
-  background?: string
-  border?: string
   className?: string
+  hover?: boolean
   onClick?: () => void
+  as?: "div" | "button"
+  style?: React.CSSProperties
 }) {
+  const Comp = as
   return (
-    <span
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
+    <Comp
       onClick={onClick}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold",
-        onClick && "cursor-pointer",
+        "aprova-card p-5 text-left",
+        hover && "aprova-card-hover cursor-pointer",
         className
       )}
-      style={{ color, background, border }}
+      style={style}
     >
       {children}
-    </span>
+    </Comp>
   )
 }
 
-// ─── EditorialStats ──────────────────────────────────────────────────────────
+// ─── Ribbon (fita diagonal / selo) ───────────────────────────────────────────
 
-export function EditorialStats({
-  items,
-  align = "center",
-}: {
-  items: { value: React.ReactNode; label: string; sub?: string; color?: string }[]
-  align?: "center" | "left"
-}) {
+export function Ribbon({ label, color = APROVA.gold, textColor = APROVA.navy }: { label: string; color?: string; textColor?: string }) {
   return (
-    <div className="flex items-stretch overflow-x-auto scrollbar-none">
-      {items.map((item, index) => (
-        <div key={`${item.label}-${index}`} className="flex shrink-0 items-center">
-          <div className={align === "center" ? "min-w-[88px] text-center" : "min-w-[100px] text-left"}>
-            <div className="text-[18px] font-black leading-none" style={{ color: item.color ?? "#111" }}>
-              {item.value}
-            </div>
-            <div className="mt-1 text-[9px] font-[500] uppercase tracking-wide text-[#AAAAAA]">{item.label}</div>
-            {item.sub && (
-              <div className="mt-0.5 text-[9px] font-bold" style={{ color: BRAND }}>
-                {item.sub}
-              </div>
-            )}
-          </div>
-          {index < items.length - 1 && <div className="mx-3 shrink-0 bg-[#DDDDDD]" style={{ width: 1, height: 22 }} />}
-        </div>
-      ))}
+    <div
+      className="pointer-events-none absolute -right-11 top-5 rotate-45 px-12 py-1 text-[10px] font-black uppercase tracking-wider shadow-md"
+      style={{ background: color, color: textColor }}
+    >
+      {label}
     </div>
   )
 }
 
-// ─── ProgressBar (static) ────────────────────────────────────────────────────
+// ─── NavyCard (hero escuro com halftone) ─────────────────────────────────────
 
-export function ProgressBar({
-  pct,
-  color = BRAND,
-  height = 7,
-  background = "#F0F0F0",
-}: {
-  pct: number
-  color?: string
-  height?: number
-  background?: string
-}) {
-  const clamped = Math.max(0, Math.min(100, pct))
-  return (
-    <div className="w-full overflow-hidden rounded-full" style={{ height, background }}>
-      <div className="h-full rounded-full" style={{ width: `${clamped}%`, background: color }} />
-    </div>
-  )
-}
-
-// ─── AnimatedProgressBar ─────────────────────────────────────────────────────
-
-export function AnimatedProgressBar({
-  pct,
-  color,
-  height = 7,
-  background = "#F0F0F0",
-  delay = 100,
-}: {
-  pct: number
-  color?: string
-  height?: number
-  background?: string
-  delay?: number
-}) {
-  const [current, setCurrent] = useState(0)
-
-  useEffect(() => {
-    const t = setTimeout(() => setCurrent(Math.max(0, Math.min(100, pct))), delay)
-    return () => clearTimeout(t)
-  }, [pct, delay])
-
-  const fillColor =
-    color ??
-    (current >= 60 ? "#0F6E56" : current >= 30 ? "#D97706" : current > 0 ? "#D14000" : BRAND)
-
-  return (
-    <div className="w-full overflow-hidden rounded-full" style={{ height, background }}>
-      <div
-        className="h-full rounded-full"
-        style={{
-          width: `${current}%`,
-          background: fillColor,
-          transition: "width 0.6s ease",
-        }}
-      />
-    </div>
-  )
-}
-
-// ─── DarkHeroCard ────────────────────────────────────────────────────────────
-
-export function DarkHeroCard({
+export function NavyCard({
   children,
-  watermark,
   className,
+  halftone = "white",
+  ribbon,
+  ribbonColor,
+  watermark,
+  style,
 }: {
   children: React.ReactNode
-  watermark?: string
   className?: string
+  halftone?: "white" | "gold" | "blue" | "none"
+  ribbon?: string
+  ribbonColor?: string
+  watermark?: React.ReactNode
+  style?: React.CSSProperties
 }) {
   return (
     <div
       className={cn("relative overflow-hidden rounded-[22px] p-5", className)}
-      style={{ background: "#111111" }}
+      style={{
+        background: `radial-gradient(120% 140% at 15% 0%, ${APROVA.navy2} 0%, ${APROVA.navy} 60%)`,
+        boxShadow: "0 20px 48px -20px rgba(6,14,39,0.55)",
+        ...style,
+      }}
     >
-      <ConcentricDecoration />
+      {halftone !== "none" && (
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0",
+            halftone === "white" && "aprova-halftone",
+            halftone === "gold" && "aprova-halftone-gold",
+            halftone === "blue" && "aprova-halftone-blue"
+          )}
+          style={{ maskImage: "radial-gradient(120% 120% at 90% 10%, black, transparent 70%)" }}
+        />
+      )}
       {watermark && (
         <div
-          className="pointer-events-none select-none absolute bottom-3 right-4 font-black leading-none"
-          style={{ fontSize: 80, color: `rgba(37,99,235,0.07)` }}
-          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-6 -right-2 select-none font-black leading-none"
+          style={{ fontSize: 150, color: "rgba(255,255,255,0.035)" }}
+          aria-hidden
         >
           {watermark}
         </div>
       )}
+      {ribbon && <Ribbon label={ribbon} color={ribbonColor ?? APROVA.gold} />}
       <div className="relative z-10">{children}</div>
     </div>
   )
 }
 
-// ─── ModuleCard (quick action) ───────────────────────────────────────────────
+// ─── HeroMetric (métrica gigante) ────────────────────────────────────────────
 
-export function ModuleCard({
-  icon: Icon,
-  title,
-  subtitle,
-  color,
-  onClick,
+export function HeroMetric({
+  value,
+  unit,
+  label,
+  color = APROVA.ink,
+  size = 64,
+  labelColor,
 }: {
-  icon: LucideIcon
-  title: string
-  subtitle: string
-  color: string
-  onClick?: () => void
+  value: React.ReactNode
+  unit?: string
+  label?: string
+  color?: string
+  size?: number
+  labelColor?: string
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="flex flex-col gap-2 rounded-[18px] p-4 text-left w-full transition-transform duration-150 hover:scale-[1.02] active:scale-[0.97]"
-      style={{ background: color }}
-    >
-      <Icon size={24} className="text-white" />
-      <div>
-        <p className="text-[14px] font-[800] text-white">{title}</p>
-        <p className="text-[11px] text-white/60">{subtitle}</p>
-      </div>
-    </button>
-  )
-}
-
-// ─── FilterChips ─────────────────────────────────────────────────────────────
-
-export function FilterChips({
-  chips,
-  onRemove,
-  onAdd,
-}: {
-  chips: { id: string; label: string; color?: string }[]
-  onRemove?: (id: string) => void
-  onAdd?: () => void
-}) {
-  return (
-    <div className="flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
-      {chips.map((chip) => (
-        <div
-          key={chip.id}
-          className="flex-shrink-0 flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-[700] border"
-          style={{
-            background: "#EFF4FF",
-            borderColor: BRAND,
-            color: BRAND,
-          }}
-        >
-          {chip.color && (
-            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: chip.color }} />
-          )}
-          {chip.label}
-          {onRemove && (
-            <button
-              onClick={() => onRemove(chip.id)}
-              className="ml-0.5 flex items-center justify-center rounded-full hover:bg-blue-200 transition-colors"
-              style={{ width: 14, height: 14 }}
-            >
-              <X size={10} style={{ color: BRAND }} />
-            </button>
-          )}
-        </div>
-      ))}
-      {onAdd && (
-        <button
-          onClick={onAdd}
-          className="flex-shrink-0 flex items-center gap-1 rounded-full px-3 py-1.5 text-[12px] font-[600] border text-[#888] hover:bg-[#F5F5F5] transition-colors"
-          style={{ background: "#F5F5F5", borderColor: "#EBEBEB" }}
-        >
-          + Filtros
-        </button>
+    <div>
+      {label && (
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: labelColor ?? APROVA.inkMuted }}>
+          {label}
+        </p>
       )}
+      <div className="flex items-baseline gap-1.5">
+        <span className="font-display font-bold tabular" style={{ fontSize: size, color }}>
+          {value}
+        </span>
+        {unit && <span className="text-[15px] font-bold" style={{ color: labelColor ?? APROVA.inkMuted }}>{unit}</span>}
+      </div>
     </div>
   )
 }
@@ -292,18 +191,23 @@ export function FilterChips({
 
 export function SectionTitle({
   title,
-  action,
   actionLabel,
+  onAction,
+  kicker,
 }: {
   title: string
-  action?: () => void
   actionLabel?: string
+  onAction?: () => void
+  kicker?: string
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <p className="text-[13px] font-[800] text-[#111]">{title}</p>
-      {action && actionLabel && (
-        <button onClick={action} className="text-[12px] font-[700]" style={{ color: BRAND }}>
+    <div className="mb-3 flex items-end justify-between gap-3">
+      <div>
+        {kicker && <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: APROVA.blue }}>{kicker}</p>}
+        <h2 className="font-display text-[17px] font-bold" style={{ color: APROVA.ink }}>{title}</h2>
+      </div>
+      {actionLabel && (
+        <button onClick={onAction} className="shrink-0 text-[12px] font-bold transition-opacity hover:opacity-70" style={{ color: APROVA.blue }}>
           {actionLabel}
         </button>
       )}
@@ -311,78 +215,164 @@ export function SectionTitle({
   )
 }
 
-// ─── StripeCard ──────────────────────────────────────────────────────────────
+// ─── PageHeader ──────────────────────────────────────────────────────────────
 
-export function StripeCard({
-  color,
-  children,
-  className,
-  onClick,
+export function PageHeader({
+  title,
+  subtitle,
+  kicker,
+  action,
 }: {
-  color: string
-  children: React.ReactNode
-  className?: string
-  onClick?: () => void
+  title: string
+  subtitle?: string
+  kicker?: string
+  action?: React.ReactNode
 }) {
   return (
-    <div
-      className={cn(
-        "relative flex rounded-[14px] border border-[#EBEBEB] bg-white overflow-hidden",
-        onClick && "cursor-pointer hover:shadow-sm transition-shadow",
-        className
-      )}
-      onClick={onClick}
-    >
-      <div className="flex-shrink-0 rounded-l-[14px]" style={{ width: 4, background: color }} />
-      <div className="flex-1 min-w-0 p-3">{children}</div>
+    <header className="mb-6 flex items-end justify-between gap-4">
+      <div className="min-w-0">
+        {kicker && <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: APROVA.blue }}>{kicker}</p>}
+        <h1 className="font-display text-[30px] font-bold sm:text-[33px]" style={{ color: APROVA.ink }}>
+          {title}
+        </h1>
+        {subtitle && <p className="mt-2 text-[13px]" style={{ color: APROVA.inkMuted }}>{subtitle}</p>}
+      </div>
+      {action}
+    </header>
+  )
+}
+
+// ─── ProgressBar ─────────────────────────────────────────────────────────────
+
+export function ProgressBar({
+  pct,
+  color = APROVA.blue,
+  height = 8,
+  background = "#EEF1F7",
+  glow = false,
+  animate = true,
+  delay = 120,
+}: {
+  pct: number
+  color?: string
+  height?: number
+  background?: string
+  glow?: boolean
+  animate?: boolean
+  delay?: number
+}) {
+  const [w, setW] = useState(animate ? 0 : Math.max(0, Math.min(100, pct)))
+  useEffect(() => {
+    if (!animate) return
+    const t = setTimeout(() => setW(Math.max(0, Math.min(100, pct))), delay)
+    return () => clearTimeout(t)
+  }, [pct, animate, delay])
+  return (
+    <div className="w-full overflow-hidden rounded-full" style={{ height, background }}>
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: `${w}%`,
+          background: color,
+          transition: "width 0.7s cubic-bezier(0.22,1,0.36,1)",
+          boxShadow: glow ? `0 0 12px ${color}` : undefined,
+        }}
+      />
     </div>
   )
 }
 
-// ─── StatusBadge ─────────────────────────────────────────────────────────────
+// Alias kept for existing pages that still import it
+export const AnimatedProgressBar = ({ pct, color, height, background, delay }: { pct: number; color?: string; height?: number; background?: string; delay?: number }) => (
+  <ProgressBar pct={pct} color={color} height={height} background={background} delay={delay} />
+)
 
-export function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; color: string }> = {
-    Corrigida: { bg: "#ECFDF5", color: "#0F6E56" },
-    Aguardando: { bg: "#FFF8E1", color: "#D97706" },
-    Enviada: { bg: "#EFF4FF", color: BRAND },
-    "Em andamento": { bg: "#EFF4FF", color: BRAND },
-    Concluída: { bg: "#ECFDF5", color: "#0F6E56" },
-    "Não iniciada": { bg: "#F5F5F5", color: "#888" },
-  }
-  const style = map[status] ?? { bg: "#F5F5F5", color: "#888" }
+// ─── MilestoneBar (barra com marcos intermediários) ──────────────────────────
+
+export function MilestoneBar({
+  value,
+  target,
+  milestones,
+  color = APROVA.gold,
+  height = 14,
+}: {
+  value: number
+  target: number
+  milestones: { at: number; label: string }[]
+  color?: string
+  height?: number
+}) {
+  const [w, setW] = useState(0)
+  const pct = Math.max(0, Math.min(100, (value / target) * 100))
+  useEffect(() => {
+    const t = setTimeout(() => setW(pct), 200)
+    return () => clearTimeout(t)
+  }, [pct])
   return (
-    <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-[700]"
-      style={{ background: style.bg, color: style.color }}
-    >
-      {status}
-    </span>
+    <div className="pb-6 pt-1">
+      <div className="relative w-full rounded-full" style={{ height, background: "rgba(255,255,255,0.12)" }}>
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${w}%`,
+            background: `linear-gradient(90deg, ${APROVA.goldDeep}, ${color})`,
+            transition: "width 0.9s cubic-bezier(0.22,1,0.36,1)",
+            boxShadow: `0 0 16px ${color}`,
+          }}
+        />
+        {milestones.map((m) => {
+          const left = Math.min(100, (m.at / target) * 100)
+          const reached = value >= m.at
+          return (
+            <div key={m.at} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2" style={{ left: `${left}%` }}>
+              <div
+                className="rounded-full border-2"
+                style={{
+                  width: height + 4,
+                  height: height + 4,
+                  background: reached ? color : APROVA.navy,
+                  borderColor: reached ? color : "rgba(255,255,255,0.35)",
+                  boxShadow: reached ? `0 0 10px ${color}` : undefined,
+                }}
+              />
+              <span
+                className="absolute left-1/2 top-[calc(100%+4px)] -translate-x-1/2 whitespace-nowrap text-[9px] font-bold uppercase tracking-wide"
+                style={{ color: reached ? color : "rgba(255,255,255,0.5)" }}
+              >
+                {m.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
-// ─── InlineSVGChart ──────────────────────────────────────────────────────────
+// ─── GradientAreaChart ───────────────────────────────────────────────────────
 
-export function InlineSVGChart({
+export function GradientAreaChart({
   data,
-  color = BRAND,
-  height = 80,
-  showLabels = true,
+  color = APROVA.blue,
+  height = 120,
+  labels,
+  valueFormat = (v: number) => String(Math.round(v)),
 }: {
   data: number[]
   color?: string
   height?: number
-  showLabels?: boolean
+  labels?: string[]
+  valueFormat?: (v: number) => string
 }) {
   const [drawn, setDrawn] = useState(false)
   const pathRef = useRef<SVGPathElement>(null)
-  const [len, setLen] = useState(500)
+  const [len, setLen] = useState(600)
+  const gid = useRef(`g${Math.random().toString(36).slice(2, 8)}`)
 
   useEffect(() => {
-    const t = setTimeout(() => setDrawn(true), 150)
+    const t = setTimeout(() => setDrawn(true), 120)
     return () => clearTimeout(t)
   }, [])
-
   useEffect(() => {
     if (pathRef.current) {
       const l = pathRef.current.getTotalLength()
@@ -391,148 +381,355 @@ export function InlineSVGChart({
   }, [data, height])
 
   if (!data.length) return null
-
-  const W = 300
+  const W = 320
   const H = height
-  const pad = 10
-  const minVal = Math.min(...data)
-  const maxVal = Math.max(...data)
-  const range = maxVal - minVal || 1
+  const padX = 8
+  const padTop = 16
+  const padBottom = labels ? 20 : 10
+  const minV = Math.min(...data)
+  const maxV = Math.max(...data)
+  const range = maxV - minV || 1
 
-  const pts = data.map((v, i) => {
-    const x = pad + (i / Math.max(data.length - 1, 1)) * (W - 2 * pad)
-    const y = H - pad - ((v - minVal) / range) * (H - 2 * pad)
-    return { x, y, v }
-  })
-
-  const linePath = pts.reduce((acc, p, i) => acc + (i === 0 ? `M${p.x},${p.y}` : ` L${p.x},${p.y}`), "")
-  const areaPath = linePath + ` L${pts[pts.length - 1].x},${H} L${pts[0].x},${H} Z`
-
-  const bestIdx = data.indexOf(Math.max(...data))
+  const pts = data.map((v, i) => ({
+    x: padX + (i / Math.max(data.length - 1, 1)) * (W - 2 * padX),
+    y: padTop + (1 - (v - minV) / range) * (H - padTop - padBottom),
+    v,
+  }))
+  const line = pts.reduce((a, p, i) => a + (i === 0 ? `M${p.x},${p.y}` : ` L${p.x},${p.y}`), "")
+  const area = `${line} L${pts[pts.length - 1].x},${H - padBottom} L${pts[0].x},${H - padBottom} Z`
+  const last = pts[pts.length - 1]
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
       <defs>
-        <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.12" />
+        <linearGradient id={gid.current} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      {/* Grid lines */}
       {[0.25, 0.5, 0.75].map((f) => (
-        <line key={f} x1={pad} y1={pad + f * (H - 2 * pad)} x2={W - pad} y2={pad + f * (H - 2 * pad)} stroke="#F0F0F0" strokeWidth="1" />
+        <line key={f} x1={padX} x2={W - padX} y1={padTop + f * (H - padTop - padBottom)} y2={padTop + f * (H - padTop - padBottom)} stroke="#EEF1F7" strokeWidth="1" />
       ))}
-      {/* Area */}
-      <path d={areaPath} fill="url(#areaFill)" />
-      {/* Line */}
+      <path d={area} fill={`url(#${gid.current})`} opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.6s ease 0.3s" }} />
       <path
         ref={pathRef}
-        d={linePath}
+        d={line}
         stroke={color}
-        strokeWidth="2"
+        strokeWidth="2.5"
         fill="none"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeDasharray={len || undefined}
-        strokeDashoffset={drawn ? 0 : len || 500}
-        style={{ transition: "stroke-dashoffset 0.8s ease" }}
+        strokeDasharray={len}
+        strokeDashoffset={drawn ? 0 : len}
+        style={{ transition: "stroke-dashoffset 0.9s ease" }}
       />
-      {/* Points */}
-      {pts.map((p, i) => (
-        <circle
-          key={i}
-          cx={p.x}
-          cy={p.y}
-          r={i === bestIdx ? 5 : 3}
-          fill={color}
-          opacity={drawn ? 1 : 0}
-          style={{ transition: `opacity 0.4s ease ${0.5 + i * 0.05}s` }}
-        />
-      ))}
-      {/* X labels */}
-      {showLabels &&
+      {/* último ponto com glow + label fixo */}
+      <circle cx={last.x} cy={last.y} r="7" fill={color} opacity={drawn ? 0.18 : 0} style={{ transition: "opacity 0.4s ease 0.8s" }} />
+      <circle cx={last.x} cy={last.y} r="3.5" fill={color} opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.4s ease 0.8s" }} />
+      <g opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.4s ease 1s" }}>
+        <rect x={Math.min(last.x - 16, W - 34)} y={last.y - 22} width="32" height="15" rx="5" fill={color} />
+        <text x={Math.min(last.x, W - 18)} y={last.y - 11.5} textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="inherit">
+          {valueFormat(last.v)}
+        </text>
+      </g>
+      {labels &&
         pts.map((p, i) => (
-          <text key={i} x={p.x} y={H - 1} textAnchor="middle" fill="#AAAAAA" fontSize="7" fontFamily="inherit">
-            #{i + 1}
+          <text key={i} x={p.x} y={H - 4} textAnchor="middle" fill="#AAB1C0" fontSize="7.5" fontFamily="inherit">
+            {labels[i]}
           </text>
         ))}
     </svg>
   )
 }
 
-// ─── DarkEmptyState ──────────────────────────────────────────────────────────
+// ─── Sparkline ───────────────────────────────────────────────────────────────
 
-export function DarkEmptyState({
-  Icon,
+export function Sparkline({ data, color = APROVA.blue, width = 64, height = 22 }: { data: number[]; color?: string; width?: number; height?: number }) {
+  if (data.length < 2) return null
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width
+    const y = height - ((v - min) / range) * (height - 4) - 2
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  })
+  const lastX = width
+  const lastY = height - ((data[data.length - 1] - min) / range) * (height - 4) - 2
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lastX} cy={lastY} r="2.2" fill={color} />
+    </svg>
+  )
+}
+
+// ─── ExpandableChart ─────────────────────────────────────────────────────────
+// Mobile: sparkline compacta + "ver gráfico" (evita gráfico espremido). Desktop: gráfico completo.
+
+export function ExpandableChart({ data, color, children }: { data: number[]; color?: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const c = color ?? APROVA.blue
+  return (
+    <>
+      <div className="hidden lg:block">{children}</div>
+      <div className="lg:hidden">
+        {!open ? (
+          <button onClick={() => setOpen(true)} className="flex min-h-[52px] w-full items-center justify-between rounded-2xl bg-[#F6F7FB] px-4">
+            <Sparkline data={data} color={c} width={130} height={34} />
+            <span className="text-[12px] font-bold" style={{ color: c }}>Ver gráfico ↗</span>
+          </button>
+        ) : (
+          <div>
+            {children}
+            <button onClick={() => setOpen(false)} className="mt-1 text-[12px] font-bold" style={{ color: c }}>Ocultar gráfico</button>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+// ─── Avatar ──────────────────────────────────────────────────────────────────
+
+export function Avatar({ initial, color = APROVA.blue, size = 36, ring }: { initial: string; color?: string; size?: number; ring?: string }) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center rounded-full font-display font-extrabold text-white"
+      style={{ width: size, height: size, background: color, fontSize: size * 0.42, border: ring ? `2.5px solid ${ring}` : undefined }}
+    >
+      {initial}
+    </div>
+  )
+}
+
+// ─── Medal ───────────────────────────────────────────────────────────────────
+
+const MEDAL_COLORS = ["#F5B428", "#B9C2CF", "#CD8246"]
+export function Medal({ place, size = 22 }: { place: 1 | 2 | 3; size?: number }) {
+  const c = MEDAL_COLORS[place - 1]
+  return (
+    <div
+      className="flex items-center justify-center rounded-full font-display text-[11px] font-black text-white shadow"
+      style={{ width: size, height: size, background: c, boxShadow: `0 2px 8px ${c}66` }}
+    >
+      {place}
+    </div>
+  )
+}
+
+// ─── StatPill ────────────────────────────────────────────────────────────────
+
+export function StatPill({
+  icon: Icon,
+  value,
+  label,
+  iconColor,
+  dark = false,
+}: {
+  icon: PhosphorIcon
+  value: React.ReactNode
+  label?: string
+  iconColor?: string
+  dark?: boolean
+}) {
+  return (
+    <div
+      className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+      style={{ background: dark ? "rgba(255,255,255,0.08)" : "#fff", border: dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid #EDF0F6" }}
+    >
+      <Icon size={16} weight="fill" color={iconColor ?? APROVA.blue} />
+      <span className="text-[13px] font-extrabold tabular" style={{ color: dark ? "#fff" : APROVA.ink }}>{value}</span>
+      {label && <span className="text-[11px] font-medium" style={{ color: dark ? "rgba(255,255,255,0.55)" : APROVA.inkMuted }}>{label}</span>}
+    </div>
+  )
+}
+
+// ─── Chip / ChipRow ──────────────────────────────────────────────────────────
+
+export function Chip({
+  active,
+  onClick,
+  children,
+  color = APROVA.blue,
+}: {
+  active?: boolean
+  onClick?: () => void
+  children: React.ReactNode
+  color?: string
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-all duration-150"
+      style={{
+        background: active ? color : "#fff",
+        color: active ? "#fff" : APROVA.inkMuted,
+        border: `1.5px solid ${active ? color : "#E6E9F0"}`,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function ChipRow({ children }: { children: React.ReactNode }) {
+  return <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">{children}</div>
+}
+
+// ─── Segmented (toggle grande, ex: Tutor / Cronometrado) ─────────────────────
+
+export function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: string; icon?: PhosphorIcon }[]
+  value: T
+  onChange: (v: T) => void
+}) {
+  return (
+    <div className="inline-flex items-center gap-1 rounded-full bg-[#EEF1F7] p-1">
+      {options.map((o) => {
+        const active = o.value === value
+        const Icon = o.icon
+        return (
+          <button
+            key={o.value}
+            onClick={() => onChange(o.value)}
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-bold transition-all duration-150"
+            style={{ background: active ? "#fff" : "transparent", color: active ? APROVA.blue : APROVA.inkMuted, boxShadow: active ? "0 1px 4px rgba(10,15,30,0.1)" : undefined }}
+          >
+            {Icon && <Icon size={15} weight={active ? "fill" : "regular"} />}
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── StatusBadge ─────────────────────────────────────────────────────────────
+
+export function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { bg: string; color: string }> = {
+    Corrigida: { bg: "#E6F8F0", color: APROVA.successDeep },
+    Aguardando: { bg: "#FFF3DA", color: APROVA.goldDeep },
+    Enviada: { bg: APROVA.blueSoft, color: APROVA.blue },
+    "Em andamento": { bg: APROVA.blueSoft, color: APROVA.blue },
+    Concluída: { bg: "#E6F8F0", color: APROVA.successDeep },
+    "Não iniciada": { bg: "#F0F2F7", color: APROVA.inkMuted },
+  }
+  const s = map[status] ?? { bg: "#F0F2F7", color: APROVA.inkMuted }
+  return (
+    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: s.bg, color: s.color }}>
+      {status}
+    </span>
+  )
+}
+
+// ─── EmptyState (navy) ───────────────────────────────────────────────────────
+
+export function EmptyState({
+  icon: Icon,
   title,
   text,
   cta,
   onCta,
 }: {
-  Icon: LucideIcon
+  icon: PhosphorIcon
   title: string
   text: string
   cta?: string
   onCta?: () => void
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[18px] bg-[#111] p-5">
-      <ConcentricDecoration />
-      <div className="relative z-10">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[14px] bg-white/10">
-          <Icon size={28} className="text-white/30" />
-        </div>
-        <h3 className="text-[16px] font-[800] text-white leading-tight">{title}</h3>
-        <p className="mt-2 text-[12px] text-white/45 leading-relaxed">{text}</p>
-        {cta && (
-          <button
-            onClick={onCta}
-            className="mt-4 w-full rounded-full px-4 py-2.5 text-[13px] font-black text-white transition-opacity hover:opacity-90"
-            style={{ background: BRAND }}
-          >
-            {cta}
-          </button>
-        )}
+    <NavyCard halftone="blue" className="text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl" style={{ background: "rgba(255,255,255,0.08)" }}>
+        <Icon size={30} weight="duotone" color={APROVA.blueBright} />
       </div>
-    </div>
+      <h3 className="font-display text-[17px] font-extrabold text-white">{title}</h3>
+      <p className="mx-auto mt-2 max-w-[280px] text-[12.5px] leading-relaxed" style={{ color: "rgba(255,255,255,0.55)" }}>{text}</p>
+      {cta && (
+        <button
+          onClick={onCta}
+          className="mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-extrabold text-white transition-transform hover:scale-[1.03]"
+          style={{ background: APROVA.blue }}
+        >
+          {cta}
+        </button>
+      )}
+    </NavyCard>
+  )
+}
+
+// ─── PrimaryButton ───────────────────────────────────────────────────────────
+
+export function PrimaryButton({
+  children,
+  onClick,
+  color = APROVA.blue,
+  className,
+  full = false,
+}: {
+  children: React.ReactNode
+  onClick?: () => void
+  color?: string
+  className?: string
+  full?: boolean
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-extrabold text-white transition-transform hover:scale-[1.02] active:scale-[0.98]",
+        full && "w-full",
+        className
+      )}
+      style={{ background: color, boxShadow: `0 8px 20px -8px ${color}` }}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function GoldButton({ children, onClick, className, full }: { children: React.ReactNode; onClick?: () => void; className?: string; full?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-[14px] font-extrabold transition-transform hover:scale-[1.02] active:scale-[0.98]",
+        full && "w-full",
+        className
+      )}
+      style={{ background: `linear-gradient(120deg, ${APROVA.gold}, #FFB300)`, color: APROVA.navy, boxShadow: `0 8px 20px -8px ${APROVA.gold}` }}
+    >
+      {children}
+    </button>
   )
 }
 
 // ─── Toast ───────────────────────────────────────────────────────────────────
 
-interface ToastItem {
-  id: string
-  message: string
-  icon?: string
-}
-
+interface ToastItem { id: string; message: string; icon?: string }
 let globalToastAdd: ((msg: string, icon?: string) => void) | null = null
-
-export function showToast(message: string, icon?: string) {
-  globalToastAdd?.(message, icon)
-}
+export function showToast(message: string, icon?: string) { globalToastAdd?.(message, icon) }
 
 export function ToastContainer() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
-
-  const addToast = useCallback((message: string, icon?: string) => {
+  const add = useCallback((message: string, icon?: string) => {
     const id = Math.random().toString(36).slice(2)
-    setToasts((prev) => [...prev, { id, message, icon }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000)
+    setToasts((p) => [...p, { id, message, icon }])
+    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 3000)
   }, [])
-
-  useEffect(() => {
-    globalToastAdd = addToast
-    return () => { globalToastAdd = null }
-  }, [addToast])
-
+  useEffect(() => { globalToastAdd = add; return () => { globalToastAdd = null } }, [add])
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+    <div className="pointer-events-none fixed right-4 top-4 z-[100] flex flex-col gap-2">
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="flex items-center gap-2 rounded-xl px-4 py-3 text-[13px] font-[700] text-white shadow-xl pointer-events-auto"
-          style={{ background: "#111", animation: "slideUp 0.3s ease" }}
+          className="pointer-events-auto flex items-center gap-2 rounded-2xl px-4 py-3 text-[13px] font-bold text-white shadow-xl"
+          style={{ background: APROVA.navy, animation: "slideUp 0.3s ease" }}
         >
           {t.icon && <span>{t.icon}</span>}
           {t.message}

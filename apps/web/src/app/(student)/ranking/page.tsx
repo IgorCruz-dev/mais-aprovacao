@@ -1,149 +1,159 @@
 "use client"
 
 import { useState } from "react"
-import { Trophy, Calendar, ChevronDown, ChevronUp } from "lucide-react"
-import { BRAND } from "@/components/navigation/StudentChrome"
-import { PageTitle, EditorialStats, DarkHeroCard, AnimatedProgressBar, SectionTitle } from "@/components/student/StudentSurface"
-import { STUDENT, RANKING_PODIUM, RANKING_HISTORY } from "@/lib/mock-data"
+import {
+  Trophy, Crown, CaretDown, TrendUp, TrendDown, Minus,
+  CaretUp, CaretDown as CaretDownIcon, Target,
+} from "@phosphor-icons/react"
+import {
+  APROVA, BentoCard, NavyCard, PageHeader, MilestoneBar,
+  SectionTitle, Avatar, Medal,
+} from "@/components/student/StudentSurface"
+import { STUDENT, RANKING_PODIUM, RANKING_NEIGHBORS, RANKING_HISTORY, RACE, RACE_MILESTONES } from "@/lib/mock-data"
 
-function PodiumCard() {
-  const first = RANKING_PODIUM[0]
-  const second = RANKING_PODIUM[1]
-  const third = RANKING_PODIUM[2]
+// ─── Pódio ─────────────────────────────────────────────────────────────────────
 
-  return (
-    <DarkHeroCard>
-      <div className="flex items-end justify-center gap-4 mt-2 mb-3">
-        {/* 2nd */}
-        <div className="flex flex-col items-center gap-1">
-          <div
-            className="flex items-center justify-center rounded-full font-black text-white text-[14px]"
-            style={{ width: 40, height: 40, background: second.color, border: "1.5px solid rgba(255,255,255,0.2)" }}
-          >
-            {second.initial}
-          </div>
-          <span className="text-[12px] font-black" style={{ color: "rgba(255,255,255,0.6)" }}>2°</span>
-          <p className="text-[11px] font-[800] text-white">{second.name}</p>
-          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>{second.pts} pts</p>
-          <div className="w-14 rounded-t-sm" style={{ height: 50, background: "rgba(255,255,255,0.08)" }} />
-        </div>
-
-        {/* 1st */}
-        <div className="flex flex-col items-center gap-1 -mb-0">
-          {/* Crown */}
-          <svg width="20" height="16" viewBox="0 0 20 16" fill="none" aria-hidden="true">
-            <path d="M2 14L4 6L8 10L10 2L12 10L16 6L18 14H2Z" fill="#D97706" stroke="#F59E0B" strokeWidth="1" />
-          </svg>
-          <div
-            className="flex items-center justify-center rounded-full font-black text-white text-[16px]"
-            style={{ width: 56, height: 56, background: first.color, border: `2px solid ${BRAND}` }}
-          >
-            {first.initial}
-          </div>
-          <span className="text-[18px] font-black" style={{ color: "#D97706" }}>1°</span>
-          <p className="text-[13px] font-[800] text-white">{first.name}</p>
-          <p className="text-[11px] font-[700] text-white">{first.pts} pts</p>
-          <div className="w-14 rounded-t-sm" style={{ height: 70, background: "rgba(255,255,255,0.08)" }} />
-        </div>
-
-        {/* 3rd */}
-        <div className="flex flex-col items-center gap-1">
-          <div
-            className="flex items-center justify-center rounded-full font-black text-white text-[14px]"
-            style={{ width: 40, height: 40, background: third.color, border: "1.5px solid rgba(255,255,255,0.2)" }}
-          >
-            {third.initial}
-          </div>
-          <span className="text-[12px] font-black" style={{ color: "rgba(255,255,255,0.6)" }}>3°</span>
-          <p className="text-[11px] font-[800] text-white">{third.name}</p>
-          <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>{third.pts} pts</p>
-          <div className="w-14 rounded-t-sm" style={{ height: 40, background: "rgba(255,255,255,0.08)" }} />
-        </div>
+function Podium() {
+  const [first, second, third] = RANKING_PODIUM
+  const Col = ({ p, place, h, big }: { p: typeof RANKING_PODIUM[0]; place: 1 | 2 | 3; h: number; big?: boolean }) => (
+    <div className="flex flex-1 flex-col items-center justify-end gap-2">
+      {place === 1 && <Crown size={26} weight="fill" color={APROVA.gold} style={{ animation: "floatY 3s ease-in-out infinite" }} />}
+      <div className="relative">
+        <Avatar initial={p.initial} color={p.color} size={big ? 62 : 48} ring={place === 1 ? APROVA.gold : place === 2 ? "#B9C2CF" : "#CD8246"} />
+        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2"><Medal place={place} size={big ? 24 : 20} /></div>
       </div>
-    </DarkHeroCard>
+      <div className="mt-1 text-center">
+        <p className="text-[13px] font-extrabold text-white">{p.name}</p>
+        <p className="text-[12px] font-bold tabular" style={{ color: APROVA.gold }}>{p.pts} pts</p>
+      </div>
+      <div className="w-full rounded-t-xl" style={{ height: h, background: "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))", borderTop: `2px solid ${place === 1 ? APROVA.gold : "rgba(255,255,255,0.2)"}` }} />
+    </div>
+  )
+  return (
+    <NavyCard halftone="gold">
+      <div className="mx-auto flex max-w-md items-end gap-3 px-2 pt-4">
+        <Col p={second} place={2} h={64} />
+        <Col p={first} place={1} h={92} big />
+        <Col p={third} place={3} h={46} />
+      </div>
+    </NavyCard>
   )
 }
 
-function MonthlyHistory() {
-  const [expanded, setExpanded] = useState<string | null>(null)
+// ─── Concorrentes diretos ──────────────────────────────────────────────────────
 
+function DirectRivals() {
+  const [above, me, below] = RANKING_NEIGHBORS
+  const gapUp = above.pts - me.pts
+  const gapDown = me.pts - below.pts
   return (
-    <div>
-      <SectionTitle title="Histórico" />
-      <div className="mt-3 divide-y divide-[#F0F0F0]">
-        {RANKING_HISTORY.map((h) => {
-          const isOpen = expanded === h.month
-          return (
-            <div key={h.month}>
-              <button
-                className="w-full flex items-center py-3 gap-3 text-left"
-                onClick={() => setExpanded(isOpen ? null : h.month)}
-              >
-                <span className="flex-1 text-[13px] font-[700] text-[#111]">{h.month}</span>
-                <span className="text-[12px] text-[#888]">#{h.rank}</span>
-                <span className="text-[12px] font-[800]" style={{ color: BRAND }}>{h.pts} pts</span>
-                {isOpen ? <ChevronUp size={14} className="text-[#888]" /> : <ChevronDown size={14} className="text-[#888]" />}
-              </button>
-              {isOpen && (
-                <div className="pb-3 pl-2" style={{ animation: "slideUp 0.25s ease" }}>
-                  <p className="text-[12px] text-[#666]">Identidade: <span className="font-[700] text-[#111]">{h.identity}</span></p>
-                  <p className="text-[12px] text-[#666] mt-0.5">Tier: <span className="font-[700]" style={{ color: BRAND }}>{h.tier}</span></p>
-                </div>
-              )}
-            </div>
-          )
-        })}
+    <BentoCard>
+      <SectionTitle title="Seus concorrentes diretos" kicker="Quem está ao seu alcance" />
+      <div className="flex flex-col gap-2">
+        <RivalRow n={above} note={`${gapUp} pts acima`} noteColor={APROVA.error} arrow="up" />
+        <RivalRow n={me} highlight />
+        <RivalRow n={below} note={`${gapDown} pts abaixo`} noteColor={APROVA.success} arrow="down" />
       </div>
+      <p className="mt-3 text-[12px] leading-snug" style={{ color: APROVA.inkMuted }}>
+        Você precisa de só <span className="font-extrabold" style={{ color: APROVA.blue }}>{gapUp} pts</span> para ultrapassar {above.name.split(" ")[0]}. Uma redação já resolve.
+      </p>
+    </BentoCard>
+  )
+}
+
+function RivalRow({ n, note, noteColor, arrow, highlight }: { n: typeof RANKING_NEIGHBORS[0]; note?: string; noteColor?: string; arrow?: "up" | "down"; highlight?: boolean }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl px-3 py-2.5" style={{ background: highlight ? APROVA.blueSoft : "#F6F7FB", border: highlight ? `1.5px solid ${APROVA.blue}` : "1.5px solid transparent" }}>
+      <span className="w-8 text-center font-display text-[15px] font-black tabular" style={{ color: highlight ? APROVA.blue : APROVA.inkMuted }}>#{n.rank}</span>
+      <Avatar initial={n.initial} color={n.color} size={34} ring={highlight ? APROVA.gold : undefined} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13.5px] font-extrabold" style={{ color: APROVA.ink }}>{n.name}{highlight && <span className="font-semibold" style={{ color: APROVA.blue }}> (você)</span>}</p>
+        {note && (
+          <p className="flex items-center gap-1 text-[11px] font-bold" style={{ color: noteColor }}>
+            {arrow === "up" ? <CaretUp size={11} weight="bold" /> : <CaretDownIcon size={11} weight="bold" />} {note}
+          </p>
+        )}
+      </div>
+      <span className="font-display text-[16px] font-extrabold tabular" style={{ color: highlight ? APROVA.blue : APROVA.ink }}>{n.pts}</span>
     </div>
   )
 }
 
-export default function RankingPage() {
-  const ptsToTop = RANKING_PODIUM[0].pts - STUDENT.points
-  const ptsToPodium = RANKING_PODIUM[2].pts - STUDENT.points
+// ─── Corrida para o topo ───────────────────────────────────────────────────────
 
+function RaceToTop() {
+  const remaining = RACE.leaderPts - RACE.points
   return (
-    <div className="max-w-[760px] mx-auto px-4 pt-5 pb-8">
-      <div className="flex items-start justify-between mb-4">
-        <PageTitle title="Ranking" />
-        <span className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-[700] mt-1" style={{ background: "#EFF4FF", color: BRAND }}>
-          <Calendar size={12} /> Julho 2026
-        </span>
+    <NavyCard halftone="gold" className="flex flex-col justify-center">
+      <div className="mb-1 flex items-center gap-2">
+        <Target size={16} weight="fill" color={APROVA.gold} />
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.14em]" style={{ color: APROVA.gold }}>Corrida para o topo</p>
+      </div>
+      <div className="mb-1 flex items-baseline gap-1.5">
+        <span className="font-display text-[44px] font-bold tabular text-white">{RACE.points}</span>
+        <span className="text-[14px] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>/ {RACE.leaderPts} pts</span>
+      </div>
+      <MilestoneBar value={RACE.points} target={RACE.leaderPts} milestones={RACE_MILESTONES.filter((m) => m.at <= RACE.leaderPts)} />
+      <p className="text-[12px]" style={{ color: "rgba(255,255,255,0.65)" }}>Faltam <span className="font-extrabold text-white">{remaining} pts</span> para o 1º lugar.</p>
+    </NavyCard>
+  )
+}
+
+// ─── Histórico ─────────────────────────────────────────────────────────────────
+
+function History() {
+  return (
+    <BentoCard>
+      <SectionTitle title="Seu histórico" />
+      <div className="flex flex-col">
+        {RANKING_HISTORY.map((h, i) => {
+          const up = h.delta !== null && h.delta > 0
+          const down = h.delta !== null && h.delta < 0
+          return (
+            <div key={h.month} className="flex items-center gap-3 py-3" style={{ borderTop: i > 0 ? "1px solid #F1F3F8" : undefined }}>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: up ? "#E6F8F0" : down ? "#FDECEC" : "#F0F2F7" }}>
+                {up ? <TrendUp size={17} weight="bold" color={APROVA.success} /> : down ? <TrendDown size={17} weight="bold" color={APROVA.error} /> : <Minus size={17} color={APROVA.inkMuted} />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-extrabold" style={{ color: APROVA.ink }}>{h.month}</p>
+                <p className="text-[11px]" style={{ color: APROVA.inkMuted }}>{h.identity}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[13px] font-extrabold tabular" style={{ color: APROVA.ink }}>#{h.rank}</p>
+                {h.delta !== null && (
+                  <p className="text-[11px] font-bold tabular" style={{ color: up ? APROVA.success : APROVA.error }}>{up ? "+" : ""}{h.delta} pts</p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </BentoCard>
+  )
+}
+
+export default function RankingPage() {
+  const [period, setPeriod] = useState("Julho 2026")
+  return (
+    <div className="mx-auto max-w-[1080px] px-4 pt-5 lg:px-8 lg:pt-7">
+      <PageHeader
+        title="Ranking"
+        kicker="Competição mensal"
+        action={
+          <button className="inline-flex items-center gap-1.5 rounded-full border border-[#E6E9F0] bg-white px-3.5 py-2 text-[12px] font-bold" style={{ color: APROVA.ink }}>
+            {period} <CaretDown size={13} />
+          </button>
+        }
+      />
+
+      <div className="mb-4"><Podium /></div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <DirectRivals />
+        <RaceToTop />
       </div>
 
-      {/* Stats */}
-      <div className="mb-5">
-        <EditorialStats items={[
-          { value: `#${STUDENT.rank}`, label: "posição", color: BRAND },
-          { value: `${STUDENT.points}`, label: "pontos", color: "#D97706" },
-        ]} />
-      </div>
-
-      {/* Podium */}
-      <div className="mb-4">
-        <PodiumCard />
-      </div>
-
-      {/* My position */}
-      <div
-        className="rounded-full px-4 py-2.5 text-center text-[12px] font-[700] mb-5"
-        style={{ background: "#EFF4FF", color: BRAND }}
-      >
-        Você está em <strong>#{STUDENT.rank}</strong> com {STUDENT.points} pts —{" "}
-        {ptsToPodium > 0 ? `${ptsToPodium} pts para o pódio` : "você está no pódio! 🎉"}
-      </div>
-
-      {/* Progress to top */}
-      <div className="rounded-[18px] border border-[#EBEBEB] bg-white p-4 mb-5">
-        <div className="flex justify-between text-[12px] mb-2">
-          <span className="font-[700] text-[#111]">Corrida para o topo</span>
-          <span className="font-[700]" style={{ color: BRAND }}>{STUDENT.points} / {RANKING_PODIUM[0].pts} pts</span>
-        </div>
-        <AnimatedProgressBar pct={(STUDENT.points / RANKING_PODIUM[0].pts) * 100} color={BRAND} height={8} />
-        <p className="text-[11px] text-[#888] mt-1.5">Faltam {ptsToTop} pts para o 1° lugar</p>
-      </div>
-
-      <MonthlyHistory />
+      <div className="mt-4"><History /></div>
     </div>
   )
 }

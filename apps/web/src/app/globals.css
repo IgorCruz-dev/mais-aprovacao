@@ -62,6 +62,27 @@
   --color-streak: #E84A00;
   --color-surface: #F8F8F4;
 
+  /* ── Painel do aluno — design system +aprovação ── */
+  --aprova-blue:        #1B4DE4;
+  --aprova-blue-rgb:    27 77 228;
+  --aprova-blue-bright: #4D7CFF;
+  --aprova-blue-soft:   #E9EEFD;
+  --aprova-gold:        #FFC529;
+  --aprova-gold-deep:   #B78600;
+  --aprova-navy:        #060E27;
+  --aprova-navy-2:      #101E45;
+  --aprova-surface:     #F4F6FB;
+  --aprova-ink:         #0A0F1E;
+  --aprova-ink-muted:   #5D6678;
+  --aprova-streak:      #F2600C;
+  --aprova-success:     #0FA968;
+  --aprova-success-deep:#0A8754;
+  --aprova-error:       #E23030;
+  --mod-questoes:       #1B4DE4;
+  --mod-simulados:      #D97706;
+  --mod-redacoes:       #6C4BD9;
+  --mod-aulas:          #0E8A5F;
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -152,6 +173,72 @@
     @apply font-sans;
     scroll-behavior: smooth;
   }
+}
+
+/* ── Painel do aluno — utilities +aprovação ── */
+
+/* Halftone: padrão de pontos da marca (para cards navy) */
+.aprova-halftone {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.14) 1.2px, transparent 1.2px);
+  background-size: 14px 14px;
+}
+.aprova-halftone-gold {
+  background-image: radial-gradient(rgba(255, 197, 41, 0.22) 1.3px, transparent 1.3px);
+  background-size: 13px 13px;
+}
+.aprova-halftone-blue {
+  background-image: radial-gradient(rgba(27, 77, 228, 0.1) 1.3px, transparent 1.3px);
+  background-size: 13px 13px;
+}
+
+/* Superfície elevada — sombra real, nunca só borda */
+.aprova-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(10, 15, 30, 0.04),
+    0 8px 24px -12px rgba(10, 15, 30, 0.12);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.aprova-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba(10, 15, 30, 0.05),
+    0 16px 36px -12px rgba(10, 15, 30, 0.18);
+}
+
+.font-display {
+  font-family: var(--font-general), var(--font-plus-jakarta), sans-serif;
+  /* correção global: contra-forma aberta em bold pede tracking neutro e leading folgado */
+  letter-spacing: -0.005em;
+  line-height: 1.08;
+}
+/* números e métricas-hero grandes: leading só um pouco mais apertado, tracking neutro */
+.font-display.tabular,
+.display-metric {
+  letter-spacing: 0;
+  line-height: 1.05;
+}
+.font-script {
+  font-family: var(--font-caveat), cursive;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 12px 0 rgba(255, 197, 41, 0.45); }
+  50%       { box-shadow: 0 0 22px 2px rgba(255, 197, 41, 0.75); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
 }
 
 /* ── App keyframes (Igor) ────────────── */

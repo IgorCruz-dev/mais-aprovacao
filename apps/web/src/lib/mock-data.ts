@@ -443,14 +443,21 @@ export const EXAMS: Exam[] = [
 
 export const RANKING_PODIUM = [
   { rank: 1, name: "Marcus", pts: 734, initial: "M", color: "#185FA5" },
-  { rank: 2, name: "Anny", pts: 424, initial: "A", color: "#534AB7" },
-  { rank: 3, name: "Gabriela", pts: 300, initial: "G", color: "#0F6E56" },
+  { rank: 2, name: "Anny", pts: 618, initial: "A", color: "#534AB7" },
+  { rank: 3, name: "Gabriela", pts: 590, initial: "G", color: "#0F6E56" },
+]
+
+// Vizinhos diretos no ranking — 1 acima, você, 1 abaixo
+export const RANKING_NEIGHBORS = [
+  { rank: 66, name: "Túlio Andrade", initial: "T", pts: 352, color: "#0E8A5F", isMe: false },
+  { rank: 67, name: "Igor Cruz", initial: "I", pts: 340, color: "#1B4DE4", isMe: true },
+  { rank: 68, name: "Larissa Moreira", initial: "L", pts: 331, color: "#6C4BD9", isMe: false },
 ]
 
 export const RANKING_HISTORY = [
-  { month: "Julho/2026", rank: 67, pts: 340, identity: "Forjador do Próximo Passo", tier: "Explorador" },
-  { month: "Maio/2026", rank: 15, pts: 54, identity: "Curador do Conhecimento", tier: "Explorador" },
-  { month: "Abril/2026", rank: 3, pts: 112, identity: "Rota da Conquista", tier: "Explorador" },
+  { month: "Julho/2026", rank: 67, pts: 340, identity: "Forjador do Próximo Passo", tier: "Explorador", delta: -52 },
+  { month: "Maio/2026", rank: 15, pts: 54, identity: "Curador do Conhecimento", tier: "Explorador", delta: -12 },
+  { month: "Abril/2026", rank: 3, pts: 112, identity: "Rota da Conquista", tier: "Explorador", delta: null },
 ]
 
 export interface Essay {
@@ -589,19 +596,430 @@ export const FAQS = [
 ]
 
 export const CLASS_ACTIVITY = [
-  { name: "Rafaella", initial: "R", color: "#534AB7", action: "resolveu Química", time: "2h atrás" },
-  { name: "Pedro", initial: "P", color: "#185FA5", action: "completou simulado de Física", time: "3h atrás" },
-  { name: "Ana", initial: "A", color: "#0F6E56", action: "enviou uma redação ENEM", time: "4h atrás" },
+  { name: "Rafaella", initial: "R", color: "#534AB7", action: "resolveu 12 questões de Química", time: "2h atrás", icon: "questoes" },
+  { name: "Pedro", initial: "P", color: "#185FA5", action: "completou um simulado de Física", time: "3h atrás", icon: "simulados" },
+  { name: "Ana", initial: "A", color: "#0F6E56", action: "enviou uma redação ENEM", time: "4h atrás", icon: "redacoes" },
+  { name: "Marcus", initial: "M", color: "#185FA5", action: "atingiu 700 pts no mês 🏆", time: "6h atrás", icon: "ranking" },
+  { name: "Gabriela", initial: "G", color: "#0F6E56", action: "completou 30 dias de ofensiva 🔥", time: "8h atrás", icon: "streak" },
+  { name: "Larissa", initial: "L", color: "#6C4BD9", action: "concluiu o módulo de Genética", time: "ontem", icon: "aulas" },
 ]
 
 export const LEVELS = [
-  { name: "Explorador", min: 0, max: 199, color: "#2563EB" },
-  { name: "Estrategista", min: 200, max: 449, color: "#534AB7" },
-  { name: "Veterano", min: 450, max: 799, color: "#0F6E56" },
-  { name: "Elite", min: 800, max: 9999, color: "#D97706" },
+  { name: "Explorador", min: 0, max: 199, color: "#1B4DE4", motto: "Todo mapa começa no primeiro passo." },
+  { name: "Estrategista", min: 200, max: 449, color: "#6C4BD9", motto: "Estudar com plano vale por dois." },
+  { name: "Veterano", min: 450, max: 799, color: "#0E8A5F", motto: "Constância vira reputação." },
+  { name: "Elite", min: 800, max: 1499, color: "#D97706", motto: "Entre os que puxam o ritmo da turma." },
+  { name: "Lendário", min: 1500, max: 9999, color: "#B78600", motto: "O nome que a turma lembra no dia da prova." },
 ]
 
 export const PREVIOUS_MONTHS = [
-  { month: "Maio/2026", label: "MAIO 2026", identity: "Curador do Conhecimento", pts: 54, rank: 15, tier: "Explorador", tierColor: "#2563EB", delta: -58 },
-  { month: "Abril/2026", label: "ABRIL 2026", identity: "Rota da Conquista", pts: 112, rank: 3, tier: "Explorador", tierColor: "#2563EB", delta: null },
+  { month: "Maio/2026", label: "MAIO 2026", identity: "Curador do Conhecimento", pts: 54, rank: 15, tier: "Explorador", tierColor: "#1B4DE4", delta: -58, questions: 61, essays: 2, exams: 1 },
+  { month: "Abril/2026", label: "ABRIL 2026", identity: "Rota da Conquista", pts: 112, rank: 3, tier: "Explorador", tierColor: "#1B4DE4", delta: null, questions: 140, essays: 4, exams: 3 },
 ]
+
+// ─── Corrida para aprovação (barra com marcos) ───────────────────────────────
+
+export const RACE = {
+  points: 340,
+  target: 1000,
+  milestones: [250, 500, 750, 1000],
+  leaderPts: 734, // Marcus, 1º lugar
+}
+
+// ─── Metadados de questões (estatísticas + explicação + aula relacionada) ────
+
+export interface QuestionMeta {
+  pctCorrect: number
+  dist: Record<string, number>
+  explanation: string
+  lessonId?: string
+  lessonTitle?: string
+}
+
+export const QUESTION_META: Record<string, QuestionMeta> = {
+  q01: {
+    pctCorrect: 58,
+    dist: { A: 14, B: 18, C: 58, D: 10 },
+    explanation:
+      "O autor nega a visão instrumental (\"não é apenas um instrumento\") e afirma que a linguagem \"modela a realidade e constrói identidades\" — ou seja, ela constitui a percepção do sujeito. As demais alternativas reduzem a linguagem a transmissão neutra ou biológica.",
+    lessonId: "l08",
+    lessonTitle: "Termos Essenciais da Oração",
+  },
+  q02: {
+    pctCorrect: 31,
+    dist: { A: 31, B: 27, C: 24, D: 18 },
+    explanation:
+      "Com vértice em (2, -3) e ponto (0, 1): c = 1; do vértice, -b/2a = 2 e f(2) = -3. Resolvendo, a = 1, b = -4, c = 1, logo a + b + c = -2 + 3 = 1... a soma é f(1) = 1 - 4 + 1 = -2 + 3 = 1. Alternativa A.",
+    lessonId: "l06",
+    lessonTitle: "Função Quadrática",
+  },
+  q03: {
+    pctCorrect: 64,
+    dist: { A: 12, B: 64, C: 15, D: 9 },
+    explanation:
+      "Combustão libera calor para a vizinhança (ΔH < 0), sendo o exemplo clássico de reação exotérmica. Fotossíntese e eletrólise absorvem energia (endotérmicas).",
+  },
+  q04: {
+    pctCorrect: 78,
+    dist: { A: 6, B: 9, C: 78, D: 7 },
+    explanation: "Pela 2ª Lei de Newton, a = F/m = 20 N ÷ 5 kg = 4 m/s².",
+  },
+  q05: {
+    pctCorrect: 42,
+    dist: { A: 11, B: 33, C: 42, D: 14 },
+    explanation:
+      "A proporção 9:3:3:1 em F2 de cruzamento dihíbrido demonstra que os alelos de genes diferentes segregam de forma independente — a 3ª Lei (Segregação Independente).",
+    lessonId: "l03",
+    lessonTitle: "Herança Mendeliana",
+  },
+  q06: {
+    pctCorrect: 55,
+    dist: { A: 55, B: 17, C: 13, D: 15 },
+    explanation:
+      "Ventre Livre (1871) → Sexagenários (1885) → Lei Áurea (1888): a abolição foi gradual, culminando na Lei Áurea.",
+  },
+  q07: {
+    pctCorrect: 71,
+    dist: { A: 71, B: 12, C: 10, D: 7 },
+    explanation:
+      "A urbanização acelerada sem planejamento gera êxodo rural e periferias sem infraestrutura — processo típico de países em desenvolvimento.",
+  },
+  q08: {
+    pctCorrect: 69,
+    dist: { A: 13, B: 69, C: 9, D: 9 },
+    explanation:
+      "\"Despite\" introduz concessão/contraste: apesar da chuva, o evento foi mantido.",
+  },
+  q09: {
+    pctCorrect: 66,
+    dist: { A: 66, B: 11, C: 15, D: 8 },
+    explanation:
+      "Pitágoras: h² = 6² + 8² = 100 → h = 10 cm. Área = (6 × 8)/2 = 24 cm².",
+    lessonId: "l06",
+    lessonTitle: "Função Quadrática",
+  },
+  q10: {
+    pctCorrect: 38,
+    dist: { A: 22, B: 19, C: 38, D: 21 },
+    explanation:
+      "A aromaticidade estabiliza o anel; por isso o benzeno prefere substituição eletrofílica, que preserva o sistema de elétrons deslocalizados.",
+  },
+  q11: {
+    pctCorrect: 35,
+    dist: { A: 25, B: 35, C: 26, D: 14 },
+    explanation:
+      "fem = N·ΔΦ/Δt = 200 × (1,0 Wb ÷ 2 s) = 100 V.",
+  },
+  q12: {
+    pctCorrect: 61,
+    dist: { A: 10, B: 12, C: 61, D: 17 },
+    explanation:
+      "A expansão agrícola fragmenta habitats contínuos do Cerrado, rompendo corredores ecológicos usados pela fauna.",
+  },
+  q13: {
+    pctCorrect: 73,
+    dist: { A: 8, B: 73, C: 12, D: 7 },
+    explanation:
+      "A ONU nasceu em 1945 para promover cooperação internacional e evitar novos conflitos em escala mundial.",
+    lessonId: "l12",
+    lessonTitle: "O Conflito e o Holocausto",
+  },
+  q14: {
+    pctCorrect: 52,
+    dist: { A: 21, B: 52, C: 14, D: 13 },
+    explanation:
+      "\"Haver\" no sentido de existir é impessoal: \"Havia muitos candidatos\". \"Fazem dois anos\" e \"Houveram\" violam a norma culta.",
+    lessonId: "l08",
+    lessonTitle: "Termos Essenciais da Oração",
+  },
+  q15: {
+    pctCorrect: 47,
+    dist: { A: 20, B: 18, C: 47, D: 15 },
+    explanation:
+      "P = (5/8) × (4/7) = 20/56 = 5/14 — sem reposição, o segundo sorteio tem 4 vermelhas em 7 bolas.",
+  },
+  q16: {
+    pctCorrect: 74,
+    dist: { A: 7, B: 11, C: 74, D: 8 },
+    explanation: "v = c/n = 3×10⁸ ÷ 1,5 = 2×10⁸ m/s.",
+  },
+  q17: {
+    pctCorrect: 59,
+    dist: { A: 16, B: 12, C: 59, D: 13 },
+    explanation:
+      "No Brasil, o El Niño intensifica chuvas no Sul e agrava a seca no Nordeste.",
+  },
+  q18: {
+    pctCorrect: 63,
+    dist: { A: 13, B: 63, C: 14, D: 10 },
+    explanation:
+      "Present perfect com \"for\" indica ação iniciada no passado que persiste: \"She has lived in Paris for five years\".",
+  },
+  q19: {
+    pctCorrect: 29,
+    dist: { A: 18, B: 24, C: 29, D: 29 },
+    explanation:
+      "Le Chatelier: aumentar a pressão desloca para o lado com menos mols de gás (produtos) e remover NH₃ puxa o equilíbrio para repor o produto retirado.",
+  },
+  q20: {
+    pctCorrect: 76,
+    dist: { A: 6, B: 8, C: 76, D: 10 },
+    explanation:
+      "A ativação simpática prepara para \"luta ou fuga\": taquicardia, broncodilatação e inibição da digestão.",
+    lessonId: "l03",
+    lessonTitle: "Herança Mendeliana",
+  },
+}
+
+// ─── Estatísticas de simulados (percentil, média da turma, nota estimada) ────
+
+export interface ExamStats {
+  classAvg: number
+  percentile: number
+  estimatedScore: number // nota estimada na escala da prova (TRI p/ ENEM)
+}
+
+export const EXAM_STATS: Record<string, ExamStats> = {
+  e01: { classAvg: 9.8, percentile: 62, estimatedScore: 468 },
+  e02: { classAvg: 9.8, percentile: 62, estimatedScore: 468 },
+  e03: { classAvg: 10.4, percentile: 22, estimatedScore: 402 },
+  e04: { classAvg: 9.1, percentile: 45, estimatedScore: 436 },
+  e05: { classAvg: 8.7, percentile: 4, estimatedScore: 350 },
+  e06: { classAvg: 10.2, percentile: 71, estimatedScore: 501 },
+  e07: { classAvg: 9.5, percentile: 48, estimatedScore: 442 },
+  e08: { classAvg: 9.0, percentile: 60, estimatedScore: 468 },
+  e09: { classAvg: 8.8, percentile: 33, estimatedScore: 418 },
+}
+
+export const EXAM_SUMMARY = {
+  done: 9,
+  avg: 7.1,
+  best: 16.7,
+  rank: 67,
+  classAvg: 9.5,
+  estimatedEnem: 442,
+}
+
+// ─── Correção de redação em profundidade (r01) ───────────────────────────────
+
+export interface EssaySegment {
+  text: string
+  comp?: 1 | 2 | 3 | 4 | 5 // trecho grifado ligado a uma competência
+}
+
+export interface CompetencyReview {
+  c: 1 | 2 | 3 | 4 | 5
+  name: string
+  score: number
+  max: number
+  comment: string
+  before: string
+  after: string
+}
+
+export const ESSAY_REVIEW: {
+  essayId: string
+  paragraphs: EssaySegment[][]
+  competencies: CompetencyReview[]
+} = {
+  essayId: "r01",
+  paragraphs: [
+    [
+      { text: "A Constituição Federal de 1988 assegura a todos os cidadãos o acesso à informação. Entretanto, " },
+      { text: "no Brasil contemporâneo, milhões de pessoas permanece à margem do universo digital", comp: 1 },
+      { text: ", seja pela ausência de infraestrutura, seja pelo custo dos equipamentos. Dessa forma, a inclusão digital configura-se como um desafio que exige ação coordenada entre Estado, escolas e sociedade civil." },
+    ],
+    [
+      { text: "Em primeira análise, é importante destacar a dimensão territorial do problema. " },
+      { text: "Segundo dados do IBGE, cerca de 30% dos domicílios rurais não possuem acesso à internet banda larga", comp: 2 },
+      { text: ", o que aprofunda desigualdades históricas entre campo e cidade. " },
+      { text: "Nesse contexto, o filósofo Pierre Lévy argumenta que a cibercultura amplia as possibilidades de construção coletiva do saber — benefício que, no entanto, só alcança quem está conectado.", comp: 3 },
+    ],
+    [
+      { text: "Ademais, a exclusão digital compromete o exercício da cidadania. Serviços essenciais — do agendamento no SUS à emissão de documentos — migraram para plataformas online. " },
+      { text: "Além disso, também é válido ressaltar ainda que a escola pública sofre com a falta de equipamentos", comp: 4 },
+      { text: ", limitando o letramento digital justamente da população que mais depende dele para ascender socialmente." },
+    ],
+    [
+      { text: "Portanto, o poder público deve agir para democratizar o acesso à rede. " },
+      { text: "Cabe ao Ministério das Comunicações expandir o programa de banda larga nas escolas e subsidiar equipamentos para famílias de baixa renda", comp: 5 },
+      { text: ", em parceria com ONGs de letramento digital, a fim de que a inclusão digital deixe de ser privilégio e se torne, de fato, um direito de todos." },
+    ],
+  ],
+  competencies: [
+    {
+      c: 1,
+      name: "Domínio da norma culta",
+      score: 160,
+      max: 200,
+      comment:
+        "Bom domínio geral, com desvio pontual de concordância verbal no 1º parágrafo.",
+      before: "milhões de pessoas permanece à margem do universo digital",
+      after: "milhões de pessoas permanecem à margem do universo digital",
+    },
+    {
+      c: 2,
+      name: "Compreensão do tema",
+      score: 140,
+      max: 200,
+      comment:
+        "O tema é compreendido, mas o dado do IBGE aparece solto — conecte-o explicitamente à tese da desigualdade de acesso.",
+      before: "cerca de 30% dos domicílios rurais não possuem acesso à internet banda larga",
+      after:
+        "cerca de 30% dos domicílios rurais não possuem banda larga — evidência de que a exclusão digital é também uma questão territorial",
+    },
+    {
+      c: 3,
+      name: "Seleção e organização das informações",
+      score: 160,
+      max: 200,
+      comment:
+        "Bom repertório (Pierre Lévy), mas a citação encerra o parágrafo sem retorno ao argumento. Feche o raciocínio.",
+      before:
+        "benefício que, no entanto, só alcança quem está conectado.",
+      after:
+        "benefício que, no entanto, só alcança quem está conectado — e é justamente essa fronteira que o Estado precisa dissolver.",
+    },
+    {
+      c: 4,
+      name: "Coerência e coesão",
+      score: 160,
+      max: 200,
+      comment:
+        "Conectivos empilhados no 3º parágrafo (\"Além disso, também... ainda\") geram redundância.",
+      before: "Além disso, também é válido ressaltar ainda que a escola pública sofre",
+      after: "Além disso, a escola pública sofre",
+    },
+    {
+      c: 5,
+      name: "Proposta de intervenção",
+      score: 160,
+      max: 200,
+      comment:
+        "Proposta com agente, ação e parceria. Falta detalhar o meio de execução e o efeito esperado.",
+      before:
+        "Cabe ao Ministério das Comunicações expandir o programa de banda larga nas escolas e subsidiar equipamentos",
+      after:
+        "Cabe ao Ministério das Comunicações, por meio de editais do FUST, expandir a banda larga nas escolas e subsidiar equipamentos, reduzindo pela metade a exclusão digital escolar até 2030",
+    },
+  ],
+}
+
+// ─── Detalhe de aula (transcrição, anotações, materiais) ─────────────────────
+
+export interface TranscriptLine {
+  time: string
+  seconds: number
+  text: string
+}
+
+export const LESSON_TRANSCRIPT: TranscriptLine[] = [
+  { time: "00:12", seconds: 12, text: "Bom, pessoal, na aula passada a gente viu a Primeira Lei de Mendel. Hoje vamos entender como essa herança se manifesta nos cruzamentos." },
+  { time: "01:05", seconds: 65, text: "Mendel trabalhou com ervilhas porque elas têm características bem definidas: semente lisa ou rugosa, amarela ou verde." },
+  { time: "02:40", seconds: 160, text: "Quando cruzamos dois heterozigotos Aa × Aa, a proporção genotípica é 1:2:1 — anotem isso, cai direto no ENEM." },
+  { time: "04:18", seconds: 258, text: "A proporção fenotípica, por outro lado, é 3:1, porque o alelo dominante mascara o recessivo." },
+  { time: "05:52", seconds: 352, text: "Repara no quadro de Punnett: cada gameta carrega apenas UM alelo do par. Essa é a essência da segregação." },
+  { time: "07:30", seconds: 450, text: "Pulo do gato: dominante não é 'mais forte', é o alelo que se expressa em heterozigose. Não confundam." },
+  { time: "09:10", seconds: 550, text: "Deixei uma lista da UNESP no material de apoio. Façam antes da próxima aula que a gente corrige junto." },
+]
+
+export const LESSON_NOTES = [
+  { id: "n1", time: "02:40", seconds: 160, text: "Aa × Aa → genotípica 1:2:1. Cai direto no ENEM.", flashcard: false },
+  { id: "n2", time: "07:30", seconds: 450, text: "Dominante = se expressa em heterozigose, não é 'mais forte'.", flashcard: true },
+]
+
+export const LESSON_MATERIALS = [
+  { id: "m1", name: "Resumo — Leis de Mendel.pdf", size: "1,2 MB", kind: "PDF" },
+  { id: "m2", name: "Lista UNESP — Genética.pdf", size: "820 KB", kind: "PDF" },
+  { id: "m3", name: "Quadro de Punnett (modelo).png", size: "310 KB", kind: "IMG" },
+]
+
+export const LESSON_MODULES = [
+  {
+    title: "Biologia — Genética Mendeliana",
+    professor: "Prof. Carlos",
+    color: "#0E8A5F",
+    lessons: [
+      { id: "l01", title: "Introdução à Genética", duration: "45min", status: "Concluída" as const },
+      { id: "l02", title: "Primeira Lei de Mendel", duration: "48min", status: "Concluída" as const },
+      { id: "l03", title: "Herança Mendeliana", duration: "45min", status: "Em andamento" as const, progress: 45 },
+      { id: "l04", title: "Segunda Lei de Mendel", duration: "42min", status: "Não iniciada" as const },
+    ],
+  },
+  {
+    title: "Matemática — Funções do 2° Grau",
+    professor: "Prof. Ana",
+    color: "#D97706",
+    lessons: [
+      { id: "l05", title: "Introdução às Funções", duration: "50min", status: "Concluída" as const },
+      { id: "l06", title: "Função Quadrática", duration: "52min", status: "Concluída" as const },
+      { id: "l07", title: "Gráfico da Parábola", duration: "48min", status: "Não iniciada" as const },
+    ],
+  },
+  {
+    title: "Língua Portuguesa — Análise Sintática",
+    professor: "Prof. Marcos",
+    color: "#185FA5",
+    lessons: [
+      { id: "l08", title: "Termos Essenciais da Oração", duration: "40min", status: "Concluída" as const },
+      { id: "l09", title: "Termos Integrantes", duration: "38min", status: "Concluída" as const },
+      { id: "l10", title: "Termos Acessórios", duration: "42min", status: "Não iniciada" as const },
+    ],
+  },
+]
+
+// ─── Títulos disponíveis (critério visível) ──────────────────────────────────
+
+export const TITLES = [
+  { name: "Iniciante", condition: "1ª questão respondida", earned: true, icon: "seedling" },
+  { name: "Persistente", condition: "Streak de 7 dias", earned: false, progress: 5, target: 7, icon: "flame" },
+  { name: "Dedicado", condition: "100 questões respondidas", earned: true, icon: "barbell" },
+  { name: "Guerreiro", condition: "500 questões respondidas", earned: false, progress: 248, target: 500, icon: "sword" },
+  { name: "Mestre", condition: "1000 questões respondidas", earned: false, progress: 248, target: 1000, icon: "crown" },
+  { name: "Campeão de Redação", condition: "10 redações corrigidas", earned: false, progress: 2, target: 10, icon: "pen" },
+  { name: "Simuladeiro", condition: "5 simulados concluídos", earned: true, icon: "exam" },
+  { name: "Mês de Ouro", condition: "Top 3 no ranking mensal", earned: true, icon: "medal" },
+]
+
+// ─── Marcos da corrida (rótulos dos milestones da RACE) ──────────────────────
+
+export const RACE_MILESTONES = [
+  { at: 250, label: "Estrategista" },
+  { at: 500, label: "Meta do mês" },
+  { at: 750, label: "Veterano" },
+  { at: 1000, label: "Topo da turma" },
+]
+
+// ─── Tendência de nota de redação (média histórica) ──────────────────────────
+
+export const ESSAY_TREND = [620, 640, 680, 700, 720, 760, 780]
+
+// ─── Perfil completo ─────────────────────────────────────────────────────────
+
+export const PROFILE = {
+  fullName: "Igor Silva Cruz",
+  username: "igorcruz",
+  birthDate: "14/03/2008",
+  phone: "(34) 99123-4567",
+  bio: "Foco em Medicina na UFU. Estudo melhor de manhã cedo e amo questões de Biologia.",
+  accessibility: "Nenhuma",
+  publicProfile: true,
+  plan: {
+    name: "Plano Anual +Aprovação",
+    status: "Ativo",
+    since: "Abril de 2026",
+    nextCharge: "02/08/2026",
+    price: "R$ 79,90/mês",
+  },
+  targetExams: ["ENEM", "UFU", "UNESP"],
+  studyRoutine: { daysPerWeek: 5, preferredTime: "Manhã", weeklyGoalHours: 14 },
+}
+
+export const PROFILE_SECTIONS = [
+  { key: "identidade", label: "Identidade", icon: "user" },
+  { key: "plano", label: "Meu Plano", icon: "card" },
+  { key: "jornada", label: "Jornada Acadêmica", icon: "target" },
+  { key: "rotina", label: "Rotina de Estudos", icon: "clock" },
+  { key: "seguranca", label: "Acesso e Segurança", icon: "lock" },
+  { key: "preferencias", label: "Preferências", icon: "sliders" },
+] as const

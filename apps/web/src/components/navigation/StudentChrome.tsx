@@ -4,55 +4,51 @@ import { useState, useEffect, useRef, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Home, BookOpen, FileText, Video, PenLine,
-  Trophy, Award, TrendingUp, HelpCircle, User,
-  ChevronLeft, Bell, Menu, X,
-} from "lucide-react"
+  House, Books, Exam, VideoCamera, PencilLine,
+  Trophy, Medal, ChartLineUp, Question, User,
+  CaretLeft, Bell, List, X, Fire,
+} from "@phosphor-icons/react"
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 import { STUDENT } from "@/lib/mock-data"
+import { APROVA } from "@/components/student/StudentSurface"
 
-export const BRAND = "#2563EB"
-export const BRAND_RGB = "37, 99, 235"
-export const MODULE_COLORS = {
-  questions: "#185FA5",
-  exams: "#D97706",
-  essays: "#534AB7",
-}
+// Backward-compatible exports
+export const BRAND = APROVA.blue
+export const BRAND_RGB = "27, 77, 228"
+export const MODULE_COLORS = { questions: "#1B4DE4", exams: "#D97706", essays: "#6C4BD9" }
 
-const NAV_ITEMS = [
-  { key: "dashboard",  label: "Início",            Icon: Home,       href: "/dashboard" },
-  { key: "questoes",   label: "Questões",           Icon: BookOpen,   href: "/questoes" },
-  { key: "simulados",  label: "Simulados",          Icon: FileText,   href: "/simulados" },
-  { key: "aulas",      label: "Aulas",              Icon: Video,      href: "/aulas" },
-  { key: "redacoes",   label: "Redações",           Icon: PenLine,    href: "/redacoes" },
-  { key: "ranking",    label: "Ranking",            Icon: Trophy,     href: "/ranking" },
-  { key: "titulos",    label: "Títulos e Evolução", Icon: Award,      href: "/titulos" },
-  { key: "desempenho", label: "Meu Desempenho",     Icon: TrendingUp, href: "/desempenho" },
-  { key: "suporte",    label: "Suporte",            Icon: HelpCircle, href: "/suporte" },
-  { key: "perfil",     label: "Perfil",             Icon: User,       href: "/perfil" },
-] as const
+type NavItem = { key: string; label: string; Icon: PhosphorIcon; href: string }
 
-const MOBILE_BOTTOM = [
-  { key: "dashboard", label: "Início",   Icon: Home,    href: "/dashboard" },
-  { key: "questoes",  label: "Questões", Icon: BookOpen, href: "/questoes" },
-  { key: "ranking",   label: "Ranking",  Icon: Trophy,  href: "/ranking" },
-  { key: "redacoes",  label: "Redações", Icon: PenLine,  href: "/redacoes" },
-] as const
+const NAV_ITEMS: NavItem[] = [
+  { key: "dashboard",  label: "Início",            Icon: House,        href: "/dashboard" },
+  { key: "questoes",   label: "Questões",           Icon: Books,        href: "/questoes" },
+  { key: "simulados",  label: "Simulados",          Icon: Exam,         href: "/simulados" },
+  { key: "aulas",      label: "Aulas",              Icon: VideoCamera,  href: "/aulas" },
+  { key: "redacoes",   label: "Redações",           Icon: PencilLine,   href: "/redacoes" },
+  { key: "ranking",    label: "Ranking",            Icon: Trophy,       href: "/ranking" },
+  { key: "titulos",    label: "Títulos e Evolução", Icon: Medal,        href: "/titulos" },
+  { key: "desempenho", label: "Meu Desempenho",     Icon: ChartLineUp,  href: "/desempenho" },
+  { key: "suporte",    label: "Suporte",            Icon: Question,     href: "/suporte" },
+  { key: "perfil",     label: "Perfil",             Icon: User,         href: "/perfil" },
+]
+
+const MOBILE_BOTTOM: NavItem[] = [
+  { key: "dashboard", label: "Início",    Icon: House,      href: "/dashboard" },
+  { key: "questoes",  label: "Questões",  Icon: Books,      href: "/questoes" },
+  { key: "simulados", label: "Simulados", Icon: Exam,       href: "/simulados" },
+  { key: "redacoes",  label: "Redações",  Icon: PencilLine, href: "/redacoes" },
+]
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed"
 const SIDEBAR_COLLAPSED_EVENT = "sidebar-collapsed-change"
 
-function subscribeMounted() {
-  return () => {}
-}
+const NAVY = APROVA.navy
+const NAVY_HOVER = "rgba(255,255,255,0.06)"
 
-function getMountedSnapshot() {
-  return true
-}
-
-function getServerMountedSnapshot() {
-  return false
-}
+function subscribeMounted() { return () => {} }
+function getMountedSnapshot() { return true }
+function getServerMountedSnapshot() { return false }
 
 function getSidebarCollapsedSnapshot() {
   if (typeof window === "undefined") return false
@@ -61,14 +57,9 @@ function getSidebarCollapsedSnapshot() {
 
 function subscribeSidebarCollapsed(onStoreChange: () => void) {
   if (typeof window === "undefined") return () => {}
-
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === SIDEBAR_COLLAPSED_KEY) onStoreChange()
-  }
-
+  const onStorage = (e: StorageEvent) => { if (e.key === SIDEBAR_COLLAPSED_KEY) onStoreChange() }
   window.addEventListener("storage", onStorage)
   window.addEventListener(SIDEBAR_COLLAPSED_EVENT, onStoreChange)
-
   return () => {
     window.removeEventListener("storage", onStorage)
     window.removeEventListener(SIDEBAR_COLLAPSED_EVENT, onStoreChange)
@@ -77,58 +68,43 @@ function subscribeSidebarCollapsed(onStoreChange: () => void) {
 
 function resolveActiveKey(pathname: string): string {
   const seg = pathname.split("/").filter(Boolean)[0] ?? "dashboard"
-  const known = NAV_ITEMS.map((i) => i.key) as string[]
+  const known = NAV_ITEMS.map((i) => i.key)
   return known.includes(seg) ? seg : "dashboard"
 }
 
 function LogoBox({ expanded }: { expanded: boolean }) {
   return (
-    <Link href="/dashboard" className="flex-shrink-0 flex items-center min-w-0">
+    <Link href="/dashboard" className="flex min-w-0 shrink-0 items-center">
       <div
-        className="overflow-hidden transition-all duration-250 flex-shrink-0"
-        style={{ width: expanded ? 160 : 44, height: 44 }}
+        className="flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white transition-all duration-250"
+        style={{ width: expanded ? 148 : 40, height: 40 }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo-mais-aprovacao.jpg"
-          alt="+Aprovação"
-          style={{ height: 44, width: "auto", display: "block" }}
-        />
+        <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 34, width: "auto", display: "block" }} />
       </div>
     </Link>
   )
 }
 
-function SidebarNavItem({
-  item,
-  active,
-  expanded,
-}: {
-  item: (typeof NAV_ITEMS)[number]
-  active: boolean
-  expanded: boolean
-}) {
+function SidebarNavItem({ item, active, expanded }: { item: NavItem; active: boolean; expanded: boolean }) {
   const { Icon, label, href } = item
   return (
     <Link
       href={href}
       title={!expanded ? label : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-[10px] transition-all duration-150",
-        !expanded ? "justify-center py-2.5 mx-1 px-0" : "px-3.5 py-2.5 mx-2",
-        !active && "hover:bg-[#F5F5F5]"
+        "relative flex items-center gap-3 rounded-xl transition-all duration-150",
+        !expanded ? "mx-2 justify-center px-0 py-2.5" : "mx-2.5 px-3 py-2.5"
       )}
-      style={{ background: active ? "rgba(37,99,235,0.1)" : undefined }}
+      style={{ background: active ? "rgba(27,77,228,0.22)" : undefined }}
+      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = NAVY_HOVER }}
+      onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "transparent" }}
     >
-      <Icon size={20} className="flex-shrink-0" style={{ color: active ? BRAND : "#888888" }} />
+      {active && <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full" style={{ background: APROVA.gold }} />}
+      <Icon size={21} weight={active ? "fill" : "regular"} color={active ? "#fff" : "rgba(255,255,255,0.55)"} className="shrink-0" />
       <span
-        className="overflow-hidden whitespace-nowrap text-[14px] transition-all duration-250"
-        style={{
-          opacity: expanded ? 1 : 0,
-          maxWidth: expanded ? 160 : 0,
-          color: active ? BRAND : "#888888",
-          fontWeight: active ? 800 : 600,
-        }}
+        className="overflow-hidden whitespace-nowrap text-[13.5px] transition-all duration-250"
+        style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? 150 : 0, color: active ? "#fff" : "rgba(255,255,255,0.6)", fontWeight: active ? 800 : 600 }}
       >
         {label}
       </span>
@@ -139,75 +115,46 @@ function SidebarNavItem({
 function UserFooter({ expanded }: { expanded: boolean }) {
   return (
     <div
-      className={cn(
-        "flex items-center gap-2.5 border-t border-[#EBEBEB] pt-3 pb-3 mt-auto flex-shrink-0",
-        !expanded ? "justify-center px-1" : "px-4"
-      )}
+      className={cn("mt-auto flex shrink-0 items-center gap-2.5 pb-3 pt-3", !expanded ? "justify-center px-1" : "px-4")}
+      style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
     >
-      <div
-        className="flex-shrink-0 flex items-center justify-center rounded-full font-black text-[14px]"
-        style={{ width: 34, height: 34, background: "#111111", color: BRAND }}
-      >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-[14px] font-black text-white" style={{ background: APROVA.blue, border: `2px solid ${APROVA.gold}` }}>
         {STUDENT.initial}
       </div>
-      <div
-        className="overflow-hidden whitespace-nowrap transition-all duration-250 min-w-0"
-        style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? 130 : 0 }}
-      >
-        <p className="text-[13px] font-[700] text-[#111] leading-tight truncate">{STUDENT.name}</p>
-        <p className="text-[11px] text-[#888]">Aluno</p>
+      <div className="min-w-0 overflow-hidden whitespace-nowrap transition-all duration-250" style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? 130 : 0 }}>
+        <p className="truncate text-[13px] font-bold leading-tight text-white">{STUDENT.name}</p>
+        <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>Aluno</p>
       </div>
     </div>
   )
 }
 
-function DesktopSidebar({
-  collapsed,
-  onToggle,
-  activeKey,
-}: {
-  collapsed: boolean
-  onToggle: () => void
-  activeKey: string
-}) {
+function DesktopSidebar({ collapsed, onToggle, activeKey }: { collapsed: boolean; onToggle: () => void; activeKey: string }) {
   const [hovered, setHovered] = useState(false)
   const expanded = !collapsed || hovered
-
   return (
     <aside
-      className="hidden lg:flex flex-col h-screen sticky top-0 flex-shrink-0 bg-white border-r border-[#EBEBEB] overflow-hidden transition-all duration-250 ease z-20"
-      style={{ width: expanded ? 220 : 52 }}
+      className="sticky top-0 z-20 hidden h-screen shrink-0 flex-col overflow-hidden transition-all duration-250 ease lg:flex"
+      style={{ width: expanded ? 224 : 60, background: NAVY }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between pt-4 pb-3 border-b border-[#EBEBEB] px-2 gap-1 flex-shrink-0">
-        <div className="flex-1 min-w-0 overflow-hidden">
-          <LogoBox expanded={expanded} />
-        </div>
+      <div className="flex shrink-0 items-center justify-between gap-1 px-3 pb-3 pt-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="min-w-0 flex-1 overflow-hidden"><LogoBox expanded={expanded} /></div>
         <button
           onClick={onToggle}
-          className="flex-shrink-0 flex items-center justify-center rounded-lg text-[#888] hover:bg-[#F5F5F5] transition-all duration-150"
-          style={{ width: 28, height: 28, opacity: expanded ? 1 : 0, pointerEvents: expanded ? "auto" : "none" }}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors"
+          style={{ color: "rgba(255,255,255,0.5)", opacity: expanded ? 1 : 0, pointerEvents: expanded ? "auto" : "none" }}
           title={collapsed ? "Fixar aberta" : "Recolher"}
         >
-          <ChevronLeft
-            size={16}
-            style={{
-              transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.3s ease",
-            }}
-          />
+          <CaretLeft size={16} style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.3s ease" }} />
         </button>
       </div>
-
-      {/* Nav */}
-      <nav className="flex flex-col gap-0.5 py-3 flex-1 overflow-y-auto overflow-x-hidden">
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden py-3 scrollbar-none">
         {NAV_ITEMS.map((item) => (
           <SidebarNavItem key={item.key} item={item} active={activeKey === item.key} expanded={expanded} />
         ))}
       </nav>
-
       <UserFooter expanded={expanded} />
     </aside>
   )
@@ -215,21 +162,19 @@ function DesktopSidebar({
 
 function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
   return (
-    <header className="lg:hidden sticky top-0 z-20 bg-white border-b border-[#EBEBEB] flex items-center justify-between px-4 h-14 flex-shrink-0">
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between px-4 lg:hidden" style={{ background: NAVY }}>
       <Link href="/dashboard" className="flex items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 36, width: "auto" }} />
+        <div className="flex items-center justify-center rounded-lg bg-white px-2 py-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 26, width: "auto" }} />
+        </div>
       </Link>
       <div className="flex items-center gap-1">
-        <button className="w-9 h-9 flex items-center justify-center rounded-lg text-[#888] hover:bg-[#F5F5F5]">
-          <Bell size={18} />
-        </button>
-        <button
-          onClick={onMenuOpen}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-[#888] hover:bg-[#F5F5F5]"
-        >
-          <Menu size={18} />
-        </button>
+        <span className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-extrabold text-white" style={{ background: "rgba(242,96,12,0.18)" }}>
+          <Fire size={14} weight="fill" color={APROVA.streak} /> {STUDENT.streak}
+        </span>
+        <button className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70"><Bell size={18} /></button>
+        <button onClick={onMenuOpen} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70"><List size={20} /></button>
       </div>
     </header>
   )
@@ -237,120 +182,59 @@ function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
 
 function MobileBottomNav({ activeKey }: { activeKey: string }) {
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-[#EBEBEB] flex items-center justify-around px-1 h-16">
+    <nav className="fixed bottom-0 left-0 right-0 z-20 flex h-16 items-center justify-around px-1 lg:hidden" style={{ background: "#fff", borderTop: "1px solid #EAECF3", boxShadow: "0 -4px 20px -8px rgba(10,15,30,0.12)" }}>
       {MOBILE_BOTTOM.map(({ key, label, Icon, href }) => {
         const active = activeKey === key
         return (
-          <Link key={key} href={href} className="flex flex-col items-center gap-0.5 flex-1 py-1">
-            <div
-              className="flex items-center justify-center rounded-full px-3 py-1 transition-all duration-150"
-              style={{ background: active ? "rgba(37,99,235,0.1)" : "transparent" }}
-            >
-              <Icon size={20} style={{ color: active ? BRAND : "#CCCCCC" }} />
+          <Link key={key} href={href} className="flex flex-1 flex-col items-center gap-0.5 py-1">
+            <div className="flex items-center justify-center rounded-full px-3 py-1 transition-all duration-150" style={{ background: active ? APROVA.blueSoft : "transparent" }}>
+              <Icon size={21} weight={active ? "fill" : "regular"} color={active ? APROVA.blue : "#B4BAC7"} />
             </div>
-            <span className="text-[10px]" style={{ color: active ? BRAND : "#CCCCCC", fontWeight: active ? 800 : 500 }}>
-              {label}
-            </span>
+            <span className="text-[10px]" style={{ color: active ? APROVA.blue : "#B4BAC7", fontWeight: active ? 800 : 500 }}>{label}</span>
           </Link>
         )
       })}
-      {/* Perfil com avatar */}
-      {(() => {
-        const active = activeKey === "perfil"
-        return (
-          <Link href="/perfil" className="flex flex-col items-center gap-0.5 flex-1 py-1">
-            <div className="flex items-center justify-center rounded-full px-3 py-1" style={{ background: active ? "rgba(37,99,235,0.1)" : "transparent" }}>
-              <div
-                className="flex items-center justify-center rounded-full font-black text-[11px]"
-                style={{ width: 24, height: 24, background: "#111", color: BRAND }}
-              >
-                {STUDENT.initial}
-              </div>
-            </div>
-            <span className="text-[10px]" style={{ color: active ? BRAND : "#CCCCCC", fontWeight: active ? 800 : 500 }}>
-              Perfil
-            </span>
-          </Link>
-        )
-      })()}
+      <Link href="/perfil" className="flex flex-1 flex-col items-center gap-0.5 py-1">
+        <div className="flex items-center justify-center rounded-full px-3 py-1" style={{ background: activeKey === "perfil" ? APROVA.blueSoft : "transparent" }}>
+          <div className="flex items-center justify-center rounded-full font-black text-[11px] text-white" style={{ width: 24, height: 24, background: APROVA.blue }}>{STUDENT.initial}</div>
+        </div>
+        <span className="text-[10px]" style={{ color: activeKey === "perfil" ? APROVA.blue : "#B4BAC7", fontWeight: activeKey === "perfil" ? 800 : 500 }}>Perfil</span>
+      </Link>
     </nav>
   )
 }
 
 function MobileDrawer({ open, onClose, activeKey }: { open: boolean; onClose: () => void; activeKey: string }) {
   const ref = useRef<HTMLDivElement>(null)
-
   useEffect(() => {
     if (!open) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose()
-    }
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
     document.addEventListener("keydown", handleKey)
     return () => document.removeEventListener("keydown", handleKey)
   }, [open, onClose])
-
   return (
     <>
-      <div
-        className="lg:hidden fixed inset-0 z-40 bg-black/40 transition-opacity duration-250"
-        style={{ opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }}
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-250 lg:hidden" style={{ opacity: open ? 1 : 0, pointerEvents: open ? "auto" : "none" }} onClick={onClose} />
       <div
         ref={ref}
-        className="lg:hidden fixed top-0 left-0 bottom-0 z-50 bg-white flex flex-col shadow-2xl transition-transform duration-250 ease"
-        style={{ width: 250, transform: open ? "translateX(0)" : "translateX(-100%)" }}
+        className="fixed bottom-0 left-0 top-0 z-50 flex flex-col shadow-2xl transition-transform duration-250 ease lg:hidden"
+        style={{ width: 256, background: NAVY, transform: open ? "translateX(0)" : "translateX(-100%)" }}
       >
-        <div className="flex items-center justify-between px-4 h-14 border-b border-[#EBEBEB] flex-shrink-0">
-          <Link href="/dashboard" onClick={onClose} className="flex items-center">
+        <div className="flex h-14 shrink-0 items-center justify-between px-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="flex items-center justify-center rounded-lg bg-white px-2 py-1">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 36, width: "auto" }} />
-          </Link>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-lg text-[#888] hover:bg-[#F5F5F5]"
-          >
-            <X size={18} />
-          </button>
+            <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 26, width: "auto" }} />
+          </div>
+          <button onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70"><X size={18} /></button>
         </div>
-
-        <nav className="flex flex-col gap-0.5 py-3 flex-1 overflow-y-auto">
-          {NAV_ITEMS.map(({ key, label, Icon, href }) => {
-            const active = activeKey === key
-            return (
-              <Link
-                key={key}
-                href={href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 rounded-[10px] px-3.5 py-2.5 mx-2 transition-all duration-150 text-[14px]",
-                  !active && "hover:bg-[#F5F5F5]"
-                )}
-                style={{
-                  background: active ? "rgba(37,99,235,0.1)" : undefined,
-                  color: active ? BRAND : "#888",
-                  fontWeight: active ? 800 : 600,
-                }}
-              >
-                <Icon size={20} style={{ color: active ? BRAND : "#888" }} />
-                {label}
-              </Link>
-            )
-          })}
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto py-3 scrollbar-none">
+          {NAV_ITEMS.map((item) => (
+            <div key={item.key} onClick={onClose}>
+              <SidebarNavItem item={item} active={activeKey === item.key} expanded />
+            </div>
+          ))}
         </nav>
-
-        <div className="flex items-center gap-2.5 border-t border-[#EBEBEB] px-4 py-3 flex-shrink-0">
-          <div
-            className="flex items-center justify-center rounded-full font-black text-[14px] flex-shrink-0"
-            style={{ width: 34, height: 34, background: "#111111", color: BRAND }}
-          >
-            {STUDENT.initial}
-          </div>
-          <div>
-            <p className="text-[13px] font-[700] text-[#111]">{STUDENT.name}</p>
-            <p className="text-[11px] text-[#888]">Aluno</p>
-          </div>
-        </div>
+        <UserFooter expanded />
       </div>
     </>
   )
@@ -359,45 +243,33 @@ function MobileDrawer({ open, onClose, activeKey }: { open: boolean; onClose: ()
 export function StudentChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const activeKey = resolveActiveKey(pathname)
-
   const [drawerOpen, setDrawerOpen] = useState(false)
   const mounted = useSyncExternalStore(subscribeMounted, getMountedSnapshot, getServerMountedSnapshot)
-  const collapsed = useSyncExternalStore(
-    subscribeSidebarCollapsed,
-    getSidebarCollapsedSnapshot,
-    getServerMountedSnapshot,
-  )
+  const collapsed = useSyncExternalStore(subscribeSidebarCollapsed, getSidebarCollapsedSnapshot, getServerMountedSnapshot)
 
   const toggleCollapse = () => {
-    const next = !collapsed
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next))
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(!collapsed))
     window.dispatchEvent(new Event(SIDEBAR_COLLAPSED_EVENT))
   }
 
   if (!mounted) {
     return (
-      <div className="flex h-screen bg-[#F8F8F4]">
-        <div className="hidden lg:block flex-shrink-0 bg-white border-r border-[#EBEBEB]" style={{ width: 220 }} />
+      <div className="flex h-screen" style={{ background: APROVA.surface }}>
+        <div className="hidden shrink-0 lg:block" style={{ width: 224, background: NAVY }} />
         <div className="flex-1 overflow-y-auto">{children}</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen bg-[#F8F8F4] overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: APROVA.surface }}>
       <DesktopSidebar collapsed={collapsed} onToggle={toggleCollapse} activeKey={activeKey} />
-
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <MobileTopBar onMenuOpen={() => setDrawerOpen(true)} />
-        <main
-          key={pathname}
-          className="flex-1 overflow-y-auto pb-20 lg:pb-6"
-          style={{ animation: "pageIn 0.22s ease" }}
-        >
+        <main key={pathname} className="flex-1 overflow-y-auto pb-20 lg:pb-8" style={{ animation: "pageIn 0.24s ease" }}>
           {children}
         </main>
       </div>
-
       <MobileBottomNav activeKey={activeKey} />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} activeKey={activeKey} />
     </div>

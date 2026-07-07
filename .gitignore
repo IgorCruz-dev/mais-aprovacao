@@ -160,3 +160,5 @@ venv/
 .coverage
 .coverage.*
 htmlcov/
+.vercel
+.env*

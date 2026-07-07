@@ -1,136 +1,112 @@
 "use client"
 
-import { Hammer, Check, ChevronRight } from "lucide-react"
-import { BRAND } from "@/components/navigation/StudentChrome"
-import { PageTitle, EditorialStats, DarkHeroCard, AnimatedProgressBar, StripeCard } from "@/components/student/StudentSurface"
-import { STUDENT, LEVELS, PREVIOUS_MONTHS } from "@/lib/mock-data"
+import { useState } from "react"
+import {
+  Check, CaretDown, Hammer, Lock, Sparkle, ArrowRight,
+  Plant, Fire, Barbell, Sword, Crown, PencilLine, Exam, Medal as MedalIcon,
+} from "@phosphor-icons/react"
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
+import {
+  APROVA, BentoCard, NavyCard, PageHeader, SectionTitle, ProgressBar,
+} from "@/components/student/StudentSurface"
+import { STUDENT, LEVELS, PREVIOUS_MONTHS, TITLES } from "@/lib/mock-data"
 
 const currentLevel = LEVELS.find((l) => STUDENT.points >= l.min && STUDENT.points <= l.max) ?? LEVELS[0]
-const nextLevel = LEVELS[LEVELS.indexOf(currentLevel) + 1]
+const currentIdx = LEVELS.indexOf(currentLevel)
+const nextLevel = LEVELS[currentIdx + 1]
 
-function IdentityHero() {
+const TITLE_ICONS: Record<string, PhosphorIcon> = {
+  seedling: Plant, flame: Fire, barbell: Barbell, sword: Sword,
+  crown: Crown, pen: PencilLine, exam: Exam, medal: MedalIcon,
+}
+
+// ─── Emblema customizado ───────────────────────────────────────────────────────
+
+function Emblem({ icon: Icon, color, size = 56, earned = true }: { icon: PhosphorIcon; color: string; size?: number; earned?: boolean }) {
   return (
-    <DarkHeroCard watermark={STUDENT.tier}>
-      {/* Tag */}
-      <span
-        className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-[800] uppercase tracking-wide mb-3"
-        style={{ background: "rgba(37,99,235,0.18)", color: "#93B8F8" }}
-      >
-        IDENTIDADE ATIVA
-      </span>
-
-      {/* Icon */}
-      <div
-        className="flex items-center justify-center rounded-[12px] mb-3"
-        style={{ width: 44, height: 44, background: "rgba(255,255,255,0.1)" }}
-      >
-        <Hammer size={22} style={{ color: "rgba(255,255,255,0.8)" }} />
-      </div>
-
-      {/* Title */}
-      <h2 className="text-[22px] font-black text-white leading-tight mb-1" style={{ letterSpacing: "-0.5px" }}>
-        {STUDENT.monthlyIdentity}
-      </h2>
-      <p className="text-[12px] mb-4" style={{ color: "rgba(255,255,255,0.45)" }}>
-        {STUDENT.monthlyIdentitySubtitle}
-      </p>
-
-      {/* Next tier pill */}
-      {nextLevel && (
-        <span
-          className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-[600] mb-4"
-          style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)" }}
-        >
-          {nextLevel.name} · {Math.max(0, nextLevel.min - STUDENT.points)} pts para avançar
-        </span>
-      )}
-
-      {/* CTA */}
-      <button
-        className="flex items-center justify-center gap-2 w-full rounded-full py-3 text-[14px] font-black text-white transition-opacity hover:opacity-90"
-        style={{ background: BRAND }}
-      >
-        Refazer check-in →
-      </button>
-    </DarkHeroCard>
+    <div
+      className="relative flex items-center justify-center rounded-2xl"
+      style={{
+        width: size, height: size,
+        background: earned ? `linear-gradient(135deg, ${color}, ${color}99)` : "#EEF1F7",
+        boxShadow: earned ? `0 8px 20px -8px ${color}` : undefined,
+      }}
+    >
+      <div className="aprova-halftone pointer-events-none absolute inset-0 rounded-2xl opacity-40" />
+      <Icon size={size * 0.5} weight={earned ? "fill" : "regular"} color={earned ? "#fff" : "#B4BAC7"} />
+    </div>
   )
 }
 
-function LevelTrail() {
-  const currentIdx = LEVELS.indexOf(currentLevel)
+// ─── Hero de identidade ────────────────────────────────────────────────────────
 
+function IdentityHero() {
   return (
-    <div className="rounded-[18px] border border-[#EBEBEB] bg-white p-4">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-[14px] font-[800] text-[#111]">Trilha do mês</p>
-        {nextLevel && (
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-[700]" style={{ background: "#EFF4FF", color: BRAND }}>
-            Próximo: {nextLevel.name}
-          </span>
-        )}
+    <NavyCard halftone="blue" watermark={currentLevel.name[0]}>
+      <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide" style={{ background: "rgba(255,197,41,0.16)", color: APROVA.gold }}>
+        <Sparkle size={12} weight="fill" /> Identidade ativa
+      </span>
+      <div className="mt-4 flex items-center gap-4">
+        <Emblem icon={Hammer} color={currentLevel.color} size={64} />
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "rgba(255,255,255,0.5)" }}>{currentLevel.name} · {STUDENT.points} pts no mês</p>
+          <h2 className="font-display text-[24px] font-bold text-white">{STUDENT.monthlyIdentity}</h2>
+        </div>
       </div>
+      <p className="mt-3 text-[13px] leading-snug" style={{ color: "rgba(255,255,255,0.65)" }}>{STUDENT.monthlyIdentitySubtitle}</p>
 
+      {nextLevel && (
+        <div className="mt-4 flex items-center gap-2 rounded-2xl px-3.5 py-2.5" style={{ background: "rgba(255,255,255,0.06)" }}>
+          <ArrowRight size={15} weight="bold" color={APROVA.gold} />
+          <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.75)" }}>
+            Faltam <span className="font-extrabold text-white">{Math.max(0, nextLevel.min - STUDENT.points)} pts</span> para <span className="font-extrabold" style={{ color: APROVA.gold }}>{nextLevel.name}</span>
+          </span>
+        </div>
+      )}
+
+      <button className="mt-4 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-extrabold" style={{ background: APROVA.gold, color: APROVA.navy }}>
+        Refazer check-in <ArrowRight size={14} weight="bold" />
+      </button>
+    </NavyCard>
+  )
+}
+
+// ─── Trilha do mês (stepper vertical) ──────────────────────────────────────────
+
+function LevelTrail() {
+  return (
+    <BentoCard className="h-full">
+      <SectionTitle title="Trilha do mês" />
       <div className="relative">
-        {/* Vertical connector line */}
-        <div
-          className="absolute left-5 top-5 bottom-5"
-          style={{ width: 2, background: "#EBEBEB", zIndex: 0 }}
-        />
-        {/* Colored portion */}
-        <div
-          className="absolute left-5 top-5"
-          style={{
-            width: 2,
-            height: `${Math.min(100, (currentIdx / Math.max(LEVELS.length - 1, 1)) * 100)}%`,
-            background: BRAND,
-            zIndex: 0,
-          }}
-        />
-
-        <div className="flex flex-col gap-6 relative">
+        <div className="absolute bottom-5 left-[19px] top-5 w-0.5" style={{ background: "#EAECF3" }} />
+        <div className="absolute left-[19px] top-5 w-0.5" style={{ height: `${(currentIdx / (LEVELS.length - 1)) * 100}%`, background: currentLevel.color, transition: "height 0.8s ease" }} />
+        <div className="relative flex flex-col gap-5">
           {LEVELS.map((level, i) => {
-            const isCurrentOrBefore = i <= currentIdx
-            const isCurrent = i === currentIdx
-
+            const done = i < currentIdx
+            const current = i === currentIdx
+            const locked = i > currentIdx
             return (
-              <div key={level.name} className="flex items-start gap-4 relative">
-                {/* Circle */}
+              <div key={level.name} className="flex items-start gap-3.5">
                 <div
-                  className="flex-shrink-0 flex items-center justify-center rounded-full z-10"
+                  className="z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                   style={{
-                    width: 40,
-                    height: 40,
-                    border: `2px solid ${isCurrentOrBefore ? BRAND : "#EBEBEB"}`,
-                    background: isCurrent ? BRAND : isCurrentOrBefore ? "#EFF4FF" : "white",
-                    color: isCurrent ? "white" : isCurrentOrBefore ? BRAND : "#CCCCCC",
+                    background: current ? level.color : done ? level.color + "22" : "#fff",
+                    border: `2px solid ${locked ? "#EAECF3" : level.color}`,
+                    animation: current ? "glowPulse 2.4s ease-in-out infinite" : undefined,
                   }}
                 >
-                  {isCurrentOrBefore ? <Check size={18} /> : <ChevronRight size={16} />}
+                  {done ? <Check size={17} weight="bold" color={level.color} /> : current ? <Sparkle size={17} weight="fill" color="#fff" /> : <Lock size={15} color="#C4CAD6" />}
                 </div>
-
-                <div className="flex-1 min-w-0 pb-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[14px] font-[800]" style={{ color: isCurrentOrBefore ? "#111" : "#CCCCCC" }}>
-                      {level.name}
-                    </p>
-                    {isCurrent && (
-                      <span className="rounded-full px-2 py-0.5 text-[9px] font-[800] text-white" style={{ background: BRAND }}>
-                        AGORA
-                      </span>
-                    )}
+                <div className="min-w-0 flex-1 pb-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-display text-[14px] font-extrabold" style={{ color: locked ? "#B4BAC7" : APROVA.ink }}>{level.name}</p>
+                    {current && <span className="rounded-full px-2 py-0.5 text-[9px] font-black text-white" style={{ background: level.color }}>AGORA</span>}
                   </div>
-                  <p className="text-[11px] mb-2" style={{ color: isCurrentOrBefore ? "#888" : "#CCCCCC" }}>
-                    {level.min} a {level.max === 9999 ? "∞" : level.max} pts
-                  </p>
-                  <AnimatedProgressBar
-                    pct={isCurrent ? Math.min(100, ((STUDENT.points - level.min) / (level.max - level.min)) * 100) : i < currentIdx ? 100 : 0}
-                    color={isCurrentOrBefore ? BRAND : "#EBEBEB"}
-                    height={4}
-                    background="#F0F0F0"
-                    delay={200 + i * 100}
-                  />
-                  {!isCurrentOrBefore && (
-                    <p className="text-[10px] mt-1" style={{ color: "#CCCCCC" }}>{level.min - STUDENT.points} pts necessários</p>
+                  <p className="text-[11px]" style={{ color: locked ? "#C4CAD6" : APROVA.inkMuted }}>{level.min}–{level.max === 9999 ? "∞" : level.max} pts · {level.motto}</p>
+                  {current && (
+                    <div className="mt-2">
+                      <ProgressBar pct={((STUDENT.points - level.min) / (level.max - level.min)) * 100} color={level.color} height={5} />
+                    </div>
                   )}
                 </div>
               </div>
@@ -138,49 +114,75 @@ function LevelTrail() {
           })}
         </div>
       </div>
+    </BentoCard>
+  )
+}
+
+// ─── Conquistas (títulos com critério visível) ─────────────────────────────────
+
+function Achievements() {
+  return (
+    <div>
+      <SectionTitle title="Conquistas" kicker="Critério sempre visível" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {TITLES.map((t) => {
+          const Icon = TITLE_ICONS[t.icon] ?? MedalIcon
+          const color = t.earned ? APROVA.gold : APROVA.blue
+          const pct = t.earned ? 100 : t.progress && t.target ? Math.min(100, (t.progress / t.target) * 100) : 0
+          return (
+            <BentoCard key={t.name} className="flex flex-col items-center p-4 text-center">
+              <Emblem icon={Icon} color={t.earned ? APROVA.gold : APROVA.blue} size={48} earned={t.earned} />
+              <p className="mt-2.5 text-[12.5px] font-extrabold" style={{ color: t.earned ? APROVA.ink : APROVA.inkMuted }}>{t.name}</p>
+              <p className="mt-0.5 text-[10.5px] leading-tight" style={{ color: "#9AA1B0" }}>{t.condition}</p>
+              {t.earned ? (
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase" style={{ background: "#FFF3DA", color: APROVA.goldDeep }}><Check size={9} weight="bold" /> Conquistado</span>
+              ) : (
+                <div className="mt-2 w-full">
+                  <ProgressBar pct={pct} color={color} height={4} />
+                  <p className="mt-1 text-[9.5px] font-bold tabular" style={{ color: APROVA.inkMuted }}>{t.progress}/{t.target}</p>
+                </div>
+              )}
+            </BentoCard>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
+// ─── Meses anteriores ──────────────────────────────────────────────────────────
+
 function PreviousMonths() {
+  const [open, setOpen] = useState<string | null>(null)
   return (
     <div>
-      <p className="text-[13px] font-[800] text-[#111] mb-3">Seus meses anteriores</p>
+      <SectionTitle title="Seus meses anteriores" />
       <div className="flex flex-col gap-3">
-        {PREVIOUS_MONTHS.map((m) => (
-          <StripeCard key={m.month} color={m.tierColor}>
-            <div className="flex items-start gap-3">
-              <div
-                className="flex-shrink-0 flex items-center justify-center rounded-[8px] font-black text-white text-[10px]"
-                style={{ width: 36, height: 36, background: m.tierColor }}
-              >
-                {m.tier[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="text-[13px] font-[800] text-[#111]">{m.identity}</p>
+        {PREVIOUS_MONTHS.map((m) => {
+          const isOpen = open === m.month
+          return (
+            <BentoCard key={m.month} className="p-0">
+              <button onClick={() => setOpen(isOpen ? null : m.month)} className="flex w-full items-center gap-3 p-4 text-left">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display text-[13px] font-black text-white" style={{ background: m.tierColor }}>{m.tier[0]}</div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-extrabold" style={{ color: APROVA.ink }}>{m.identity}</p>
+                  <p className="text-[11px]" style={{ color: APROVA.inkMuted }}>{m.label} · {m.pts} pts · #{m.rank}</p>
                 </div>
-                <p className="text-[9px] font-[700] uppercase tracking-wide text-[#AAAAAA] mb-2">{m.label}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-[700]" style={{ background: "#EFF4FF", color: BRAND }}>
-                    {m.pts} pts
-                  </span>
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-[700]" style={{ background: "#F0F7FF", color: m.tierColor }}>
-                    {m.tier}
-                  </span>
-                  <span className="rounded-full px-2 py-0.5 text-[10px] font-[700] bg-[#F5F5F5] text-[#888]">
-                    Ranking #{m.rank}
-                  </span>
+                <CaretDown size={16} color={APROVA.inkMuted} style={{ transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+              </button>
+              {isOpen && (
+                <div className="grid grid-cols-3 gap-3 border-t px-4 py-3.5" style={{ borderColor: "#F1F3F8", animation: "slideUp 0.2s ease" }}>
+                  {[{ l: "Questões", v: m.questions }, { l: "Redações", v: m.essays }, { l: "Simulados", v: m.exams }].map((s) => (
+                    <div key={s.l} className="text-center">
+                      <p className="font-display text-[20px] font-extrabold tabular" style={{ color: APROVA.ink }}>{s.v}</p>
+                      <p className="text-[10px] uppercase tracking-wide" style={{ color: APROVA.inkMuted }}>{s.l}</p>
+                    </div>
+                  ))}
                 </div>
-                {m.delta !== null && (
-                  <p className="text-[10px] mt-1.5" style={{ color: m.delta >= 0 ? "#0F6E56" : "#D14000" }}>
-                    {m.delta >= 0 ? "+" : ""}{m.delta} pts vs. mês anterior
-                  </p>
-                )}
-              </div>
-            </div>
-          </StripeCard>
-        ))}
+              )}
+            </BentoCard>
+          )
+        })}
       </div>
     </div>
   )
@@ -188,30 +190,27 @@ function PreviousMonths() {
 
 export default function TitulosPage() {
   return (
-    <div className="max-w-[760px] mx-auto px-4 pt-5 pb-8">
-      <div className="flex items-start justify-between mb-4">
-        <PageTitle title="Títulos e Evolução" />
-        {STUDENT.checkinDone && (
-          <span className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-[700] mt-1 flex-shrink-0" style={{ background: "#ECFDF5", color: "#0F6E56", border: "1px solid #0F6E56" }}>
-            <Check size={11} /> Check-in de julho concluído
-          </span>
-        )}
+    <div className="mx-auto max-w-[1080px] px-4 pt-5 lg:px-8 lg:pt-7">
+      <PageHeader
+        title="Títulos e Evolução"
+        kicker="Sua jornada"
+        action={
+          STUDENT.checkinDone ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold" style={{ background: "#E6F8F0", color: APROVA.successDeep }}>
+              <Check size={12} weight="bold" /> Check-in de julho concluído
+            </span>
+          ) : undefined
+        }
+      />
+
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2"><IdentityHero /></div>
+        <div className="lg:col-span-1"><LevelTrail /></div>
       </div>
 
-      {/* Stats */}
-      <div className="mb-5">
-        <EditorialStats items={[
-          { value: STUDENT.tier, label: "tier atual", color: BRAND },
-          { value: `${STUDENT.points}`, label: "pontos", color: "#D97706" },
-          { value: STUDENT.period, label: "período", color: "#111" },
-        ]} />
-      </div>
+      <div className="mb-6"><Achievements /></div>
 
-      <div className="flex flex-col gap-5">
-        <IdentityHero />
-        <LevelTrail />
-        <PreviousMonths />
-      </div>
+      <PreviousMonths />
     </div>
   )
 }
