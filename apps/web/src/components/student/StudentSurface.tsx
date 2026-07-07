@@ -366,7 +366,9 @@ export function GradientAreaChart({
 }) {
   const [drawn, setDrawn] = useState(false)
   const pathRef = useRef<SVGPathElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [len, setLen] = useState(600)
+  const [containerWidth, setContainerWidth] = useState(320)
   const gradientId = useId().replace(/:/g, "")
 
   useEffect(() => {
@@ -378,10 +380,20 @@ export function GradientAreaChart({
       const l = pathRef.current.getTotalLength()
       if (l > 0) setLen(l)
     }
-  }, [data, height])
+  }, [data, height, containerWidth])
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width
+      if (w && w > 0) setContainerWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   if (!data.length) return null
-  const W = 320
+  const W = Math.max(containerWidth, 120)
   const H = height
   const padX = 8
   const padTop = 16
@@ -400,7 +412,8 @@ export function GradientAreaChart({
   const last = pts[pts.length - 1]
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height }}>
+    <div ref={containerRef} className="w-full">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height, display: "block" }}>
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.28" />
@@ -426,12 +439,20 @@ export function GradientAreaChart({
       {/* último ponto com glow + label fixo */}
       <circle cx={last.x} cy={last.y} r="7" fill={color} opacity={drawn ? 0.18 : 0} style={{ transition: "opacity 0.4s ease 0.8s" }} />
       <circle cx={last.x} cy={last.y} r="3.5" fill={color} opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.4s ease 0.8s" }} />
-      <g opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.4s ease 1s" }}>
-        <rect x={Math.min(last.x - 16, W - 34)} y={last.y - 22} width="32" height="15" rx="5" fill={color} />
-        <text x={Math.min(last.x, W - 18)} y={last.y - 11.5} textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="inherit">
-          {valueFormat(last.v)}
-        </text>
-      </g>
+      {(() => {
+        const labelText = valueFormat(last.v)
+        const labelW = Math.max(32, labelText.length * 5.6 + 12)
+        const labelX = Math.max(2, Math.min(last.x - labelW / 2, W - labelW - 2))
+        const labelY = Math.max(2, last.y - 22)
+        return (
+          <g opacity={drawn ? 1 : 0} style={{ transition: "opacity 0.4s ease 1s" }}>
+            <rect x={labelX} y={labelY} width={labelW} height="15" rx="5" fill={color} />
+            <text x={labelX + labelW / 2} y={labelY + 10.5} textAnchor="middle" fill="white" fontSize="9" fontWeight="800" fontFamily="inherit">
+              {labelText}
+            </text>
+          </g>
+        )
+      })()}
       {labels &&
         pts.map((p, i) => (
           <text key={i} x={p.x} y={H - 4} textAnchor="middle" fill="#AAB1C0" fontSize="7.5" fontFamily="inherit">
@@ -439,6 +460,7 @@ export function GradientAreaChart({
           </text>
         ))}
     </svg>
+    </div>
   )
 }
 
