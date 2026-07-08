@@ -194,7 +194,7 @@ function QuestionCard({
             )}
 
             {phase === "wrong" && meta.lessonId && (
-              <Link href="/aulas" className="mt-3 flex items-center gap-2.5 rounded-2xl border border-dashed p-3 transition-colors hover:bg-[#F4F7FF]" style={{ borderColor: APROVA.blue }}>
+              <Link href="/student/aulas" className="mt-3 flex items-center gap-2.5 rounded-2xl border border-dashed p-3 transition-colors hover:bg-[#F4F7FF]" style={{ borderColor: APROVA.blue }}>
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl" style={{ background: APROVA.blueSoft }}>
                   <GraduationCap size={18} weight="duotone" color={APROVA.blue} />
                 </div>
@@ -240,7 +240,7 @@ function SessionResult({ results, pts, onRestart }: { results: (boolean | null)[
         <BentoCard className="p-4 text-center"><p className="font-display text-[30px] font-extrabold" style={{ color: APROVA.error }}>{answered - correct}</p><p className="mt-1 text-[11px]" style={{ color: APROVA.inkMuted }}>Erros</p></BentoCard>
       </div>
       <PrimaryButton full onClick={onRestart}>Nova sessão</PrimaryButton>
-      <Link href="/dashboard" className="rounded-full border py-3 text-center text-[13px] font-bold" style={{ borderColor: APROVA.blue, color: APROVA.blue }}>Voltar ao início</Link>
+      <Link href="/student/dashboard" className="rounded-full border py-3 text-center text-[13px] font-bold" style={{ borderColor: APROVA.blue, color: APROVA.blue }}>Voltar ao início</Link>
     </div>
   )
 }

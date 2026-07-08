@@ -29,15 +29,15 @@ Antes de implementar dentro de um placeholder:
 
 ### Web
 
-`apps/web/src/app` esta dividido por route groups:
+`apps/web/src/app` esta dividido por area. `(public)` e `(auth)` sao route groups do Next.js (parenteses, nao aparecem na URL). As areas por role (`student`, `teacher`, `manager`, `parent`, `admin`) sao pastas normais, sem parenteses, porque o nome vira prefixo real da URL (`/student/dashboard`, `/manager/financeiro`) — isso evita colisao entre paginas de mesmo nome em roles diferentes (ex: `dashboard` existe em varios roles) e e o que permite o middleware de RBAC casar por path real:
 
 - `(public)`: catalogo publico.
 - `(auth)`: login, cadastro e estado nao autorizado.
-- `(student)`: dashboard, cursos, aulas, simulados, questoes, redacoes, auloes, ranking e certificados.
-- `(teacher)`: area docente.
-- `(manager)`: gestao operacional.
-- `(parent)`: acompanhamento de alunos vinculados.
-- `(admin)`: administracao interna.
+- `student/`: dashboard, cursos, aulas, simulados, questoes, redacoes, auloes, ranking e certificados.
+- `teacher/`: area docente.
+- `manager/`: gestao operacional.
+- `parent/`: acompanhamento de alunos vinculados.
+- `admin/`: administracao interna.
 - `api`: espaco reservado para proxies autenticados do Next.js, sem route handlers neste esqueleto.
 
 `apps/web/src/components` e `apps/web/src/features` seguem os dominios do contrato: catalogo, cursos, aulas, progresso, certificados, questoes, simulados, gamificacao, auth, checkout, live, redacoes, avisos, responsaveis e admin.

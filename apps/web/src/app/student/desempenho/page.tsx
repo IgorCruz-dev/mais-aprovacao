@@ -140,7 +140,7 @@ export default function DesempenhoPage() {
                 <span className="w-11 text-right font-display text-[17px] font-extrabold tabular" style={{ color: sub.color }}>{sub.pct.toFixed(0)}%</span>
               </div>
               {i === 0 && (
-                <Link href="/questoes" className="mt-3 inline-flex items-center gap-1.5 text-[11.5px] font-bold" style={{ color: APROVA.blue }}>
+                <Link href="/student/questoes" className="mt-3 inline-flex items-center gap-1.5 text-[11.5px] font-bold" style={{ color: APROVA.blue }}>
                   <Target size={13} weight="fill" /> Treinar {sub.subject} agora <ArrowRight size={11} weight="bold" />
                 </Link>
               )}

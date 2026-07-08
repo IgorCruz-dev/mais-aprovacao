@@ -59,7 +59,7 @@ docs/
 ## 4. Convenções de Nomenclatura
 
 - **Arquivos TypeScript:** `camelCase.ts` para utils, `PascalCase.tsx` para componentes React
-- **Rotas Next.js:** `kebab-case` nas pastas (ex: `app/(student)/banco-de-questoes/page.tsx`)
+- **Rotas Next.js:** `kebab-case` nas pastas (ex: `app/student/banco-de-questoes/page.tsx`)
 - **Tabelas banco:** `snake_case` plural (ex: `course_lessons`, `lesson_progress`)
 - **Campos Prisma:** `snake_case` direto no modelo — segue convenção do schema atual
 - **Variáveis TypeScript:** `camelCase`
@@ -419,7 +419,7 @@ export const env = envSchema.parse(process.env)
 
 ```typescript
 // PADRÃO: Server Component (sem 'use client')
-// app/(student)/cursos/page.tsx
+// app/student/cursos/page.tsx
 export default async function CoursesPage() {
   const enrollments = await getEnrollments()  // Server Action ou fetch direto
   return <CourseList enrollments={enrollments} />
@@ -464,13 +464,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 Toda `page.tsx` que faz fetch assíncrono **obrigatoriamente** tem um `loading.tsx` no mesmo diretório:
 
 ```
-app/(student)/cursos/
+app/student/cursos/
   page.tsx      → busca dados, renderiza
   loading.tsx   → Suspense boundary com skeleton
   error.tsx     → error boundary
 ```
 
 ### Estrutura de rotas (App Router)
+
+**Importante:** `(public)` e `(auth)` são *route groups* do Next.js (parênteses) — o nome da pasta **não entra na URL**, porque essas áreas querem URL limpa (`/`, `/cursos`, `/sign-in`). Já `student`, `teacher`, `manager`, `parent` e `admin` são pastas **normais** (sem parênteses) — o nome vira prefixo real da URL (`/student/dashboard`, `/manager/financeiro`). Isso é obrigatório: como cada role tem sua própria página `dashboard`, `alunos` etc., um route group faria essas páginas colidirem todas em `/dashboard` (route groups não aparecem na URL, então dois `dashboard/page.tsx` em grupos diferentes viram o mesmo path e o Next.js recusa o build). O prefixo real também é o que permite o middleware abaixo casar por path.
 
 ```
 app/
@@ -481,9 +483,9 @@ app/
     sign-in/[[...sign-in]]/page.tsx
     sign-up/[[...sign-up]]/page.tsx
     unauthorized/page.tsx       → rota para usuários sem permissão
-  (student)/
+  student/
     layout.tsx                  → layout com nav do aluno
-    dashboard/page.tsx
+    dashboard/page.tsx          → /student/dashboard
     cursos/page.tsx
     cursos/[slug]/
       page.tsx
@@ -493,26 +495,26 @@ app/
     auloes/page.tsx
     auloes/[id]/page.tsx        → sala do aulão ao vivo
     ranking/page.tsx
-  (teacher)/
+  teacher/
     layout.tsx
-    dashboard/page.tsx
+    dashboard/page.tsx          → /teacher/dashboard
     cursos/page.tsx
     cursos/[slug]/aulas/page.tsx
     redacoes/page.tsx
     auloes/page.tsx
-  (manager)/
+  manager/
     layout.tsx
-    dashboard/page.tsx
+    dashboard/page.tsx          → /manager/dashboard
     alunos/page.tsx
     relatorios/page.tsx
     financeiro/page.tsx
-  (parent)/
+  parent/
     layout.tsx
-    dashboard/page.tsx
+    dashboard/page.tsx          → /parent/dashboard
     acompanhamento/[studentId]/page.tsx
-  (admin)/
+  admin/
     layout.tsx
-    dashboard/page.tsx
+    dashboard/page.tsx          → /admin/dashboard
     questoes/page.tsx            → revisão de questões geradas por IA
     usuarios/page.tsx
   api/                           → Route Handlers (proxy para apps/api)
@@ -524,14 +526,14 @@ app/
 ### Middleware RBAC
 
 ```typescript
-// apps/web/middleware.ts
+// apps/web/src/proxy.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isStudentRoute = createRouteMatcher(['/(student)(.*)'])
-const isTeacherRoute = createRouteMatcher(['/(teacher)(.*)'])
-const isManagerRoute = createRouteMatcher(['/(manager)(.*)'])
-const isParentRoute  = createRouteMatcher(['/(parent)(.*)'])
-const isAdminRoute   = createRouteMatcher(['/(admin)(.*)'])
+const isStudentRoute = createRouteMatcher(['/student(.*)'])
+const isTeacherRoute = createRouteMatcher(['/teacher(.*)'])
+const isManagerRoute = createRouteMatcher(['/manager(.*)'])
+const isParentRoute  = createRouteMatcher(['/parent(.*)'])
+const isAdminRoute   = createRouteMatcher(['/admin(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth()

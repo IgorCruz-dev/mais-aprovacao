@@ -66,7 +66,7 @@ function GreetingHero({ greeting, atRisk }: { greeting: string; atRisk: boolean 
             <div className="flex items-center gap-2 rounded-full px-3 py-1.5" style={{ background: "rgba(242,96,12,0.16)", border: "1px solid rgba(242,96,12,0.4)" }}>
               <Warning size={14} weight="fill" color={APROVA.streak} />
               <span className="text-[11.5px] font-semibold" style={{ color: "#FFD3B8" }}>Ofensiva em risco — estude 1 questão hoje.</span>
-              <Link href="/questoes" className="text-[11.5px] font-extrabold" style={{ color: APROVA.gold }}>Estudar →</Link>
+              <Link href="/student/questoes" className="text-[11.5px] font-extrabold" style={{ color: APROVA.gold }}>Estudar →</Link>
             </div>
           )}
         </div>
@@ -102,7 +102,7 @@ function ContinueCard() {
           Aula {CURRENT_LESSON.lesson} de {CURRENT_LESSON.totalLessons} · {CURRENT_LESSON.professor} · {CURRENT_LESSON.lastWatched}
         </p>
         <div className="mt-3"><ProgressBar pct={CURRENT_LESSON.progress} color={MODULES.aulas} height={7} /></div>
-        <Link href="/aulas" className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full text-[13px] font-extrabold text-white transition-transform hover:scale-[1.01] sm:w-auto sm:px-6" style={{ background: MODULES.aulas }}>
+        <Link href="/student/aulas" className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full text-[13px] font-extrabold text-white transition-transform hover:scale-[1.01] sm:w-auto sm:px-6" style={{ background: MODULES.aulas }}>
           <Play size={14} weight="fill" /> Continuar assistindo
         </Link>
       </div>
@@ -220,7 +220,7 @@ function ClassRanking() {
   return (
     <BentoCard>
       <SectionTitle title="Ranking da turma" actionLabel="Ver ranking" onAction={() => {}} />
-      <Link href="/ranking" className="block">
+      <Link href="/student/ranking" className="block">
         <div className="flex flex-col gap-1.5">
           {RANKING_PODIUM.map((p) => (
             <div key={p.rank} className="flex items-center gap-3 rounded-xl px-2.5 py-2" style={{ background: p.rank === 1 ? "linear-gradient(90deg, #FFF7E0, #FFFDF6)" : "transparent", border: p.rank === 1 ? "1px solid #FDE9AE" : "1px solid transparent" }}>
@@ -267,7 +267,7 @@ function RecentExams() {
             </div>
             <div className="shrink-0 text-right">
               <p className="text-[15px] font-bold tabular" style={{ color: color(e.score) }}>{e.score.toFixed(1)}%</p>
-              <Link href="/simulados" className="text-[10px] font-bold" style={{ color: APROVA.blue }}>Revisar →</Link>
+              <Link href="/student/simulados" className="text-[10px] font-bold" style={{ color: APROVA.blue }}>Revisar →</Link>
             </div>
           </div>
         ))}

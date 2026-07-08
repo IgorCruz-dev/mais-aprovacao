@@ -21,23 +21,23 @@ export const MODULE_COLORS = { questions: "#1B4DE4", exams: "#D97706", essays: "
 type NavItem = { key: string; label: string; Icon: PhosphorIcon; href: string }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: "dashboard",  label: "Início",            Icon: House,        href: "/dashboard" },
-  { key: "questoes",   label: "Questões",           Icon: Books,        href: "/questoes" },
-  { key: "simulados",  label: "Simulados",          Icon: Exam,         href: "/simulados" },
-  { key: "aulas",      label: "Aulas",              Icon: VideoCamera,  href: "/aulas" },
-  { key: "redacoes",   label: "Redações",           Icon: PencilLine,   href: "/redacoes" },
-  { key: "ranking",    label: "Ranking",            Icon: Trophy,       href: "/ranking" },
-  { key: "titulos",    label: "Títulos e Evolução", Icon: Medal,        href: "/titulos" },
-  { key: "desempenho", label: "Meu Desempenho",     Icon: ChartLineUp,  href: "/desempenho" },
-  { key: "suporte",    label: "Suporte",            Icon: Question,     href: "/suporte" },
-  { key: "perfil",     label: "Perfil",             Icon: User,         href: "/perfil" },
+  { key: "dashboard",  label: "Início",            Icon: House,        href: "/student/dashboard" },
+  { key: "questoes",   label: "Questões",           Icon: Books,        href: "/student/questoes" },
+  { key: "simulados",  label: "Simulados",          Icon: Exam,         href: "/student/simulados" },
+  { key: "aulas",      label: "Aulas",              Icon: VideoCamera,  href: "/student/aulas" },
+  { key: "redacoes",   label: "Redações",           Icon: PencilLine,   href: "/student/redacoes" },
+  { key: "ranking",    label: "Ranking",            Icon: Trophy,       href: "/student/ranking" },
+  { key: "titulos",    label: "Títulos e Evolução", Icon: Medal,        href: "/student/titulos" },
+  { key: "desempenho", label: "Meu Desempenho",     Icon: ChartLineUp,  href: "/student/desempenho" },
+  { key: "suporte",    label: "Suporte",            Icon: Question,     href: "/student/suporte" },
+  { key: "perfil",     label: "Perfil",             Icon: User,         href: "/student/perfil" },
 ]
 
 const MOBILE_BOTTOM: NavItem[] = [
-  { key: "dashboard", label: "Início",    Icon: House,      href: "/dashboard" },
-  { key: "questoes",  label: "Questões",  Icon: Books,      href: "/questoes" },
-  { key: "simulados", label: "Simulados", Icon: Exam,       href: "/simulados" },
-  { key: "redacoes",  label: "Redações",  Icon: PencilLine, href: "/redacoes" },
+  { key: "dashboard", label: "Início",    Icon: House,      href: "/student/dashboard" },
+  { key: "questoes",  label: "Questões",  Icon: Books,      href: "/student/questoes" },
+  { key: "simulados", label: "Simulados", Icon: Exam,       href: "/student/simulados" },
+  { key: "redacoes",  label: "Redações",  Icon: PencilLine, href: "/student/redacoes" },
 ]
 
 const SIDEBAR_COLLAPSED_KEY = "sidebar_collapsed"
@@ -67,14 +67,14 @@ function subscribeSidebarCollapsed(onStoreChange: () => void) {
 }
 
 function resolveActiveKey(pathname: string): string {
-  const seg = pathname.split("/").filter(Boolean)[0] ?? "dashboard"
+  const seg = pathname.split("/").filter(Boolean)[1] ?? "dashboard"
   const known = NAV_ITEMS.map((i) => i.key)
   return known.includes(seg) ? seg : "dashboard"
 }
 
 function LogoBox({ expanded }: { expanded: boolean }) {
   return (
-    <Link href="/dashboard" className="flex min-w-0 shrink-0 items-center">
+    <Link href="/student/dashboard" className="flex min-w-0 shrink-0 items-center">
       <div
         className="flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white transition-all duration-250"
         style={{ width: expanded ? 148 : 40, height: 40 }}
@@ -163,7 +163,7 @@ function DesktopSidebar({ collapsed, onToggle, activeKey }: { collapsed: boolean
 function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between px-4 lg:hidden" style={{ background: NAVY }}>
-      <Link href="/dashboard" className="flex items-center">
+      <Link href="/student/dashboard" className="flex items-center">
         <div className="flex items-center justify-center rounded-lg bg-white px-2 py-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 26, width: "auto" }} />
@@ -194,7 +194,7 @@ function MobileBottomNav({ activeKey }: { activeKey: string }) {
           </Link>
         )
       })}
-      <Link href="/perfil" className="flex flex-1 flex-col items-center gap-0.5 py-1">
+      <Link href="/student/perfil" className="flex flex-1 flex-col items-center gap-0.5 py-1">
         <div className="flex items-center justify-center rounded-full px-3 py-1" style={{ background: activeKey === "perfil" ? APROVA.blueSoft : "transparent" }}>
           <div className="flex items-center justify-center rounded-full font-black text-[11px] text-white" style={{ width: 24, height: 24, background: APROVA.blue }}>{STUDENT.initial}</div>
         </div>

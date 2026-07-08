@@ -15,10 +15,10 @@ import { APROVA } from "@/components/student/StudentSurface"
 type NavItem = { key: string; label: string; Icon: PhosphorIcon; href: string }
 
 const NAV_ITEMS: NavItem[] = [
-  { key: "visao-geral", label: "Visão Geral", Icon: SquaresFour, href: "/visao-geral" },
-  { key: "alunos", label: "Alunos", Icon: Users, href: "/alunos" },
-  { key: "financeiro", label: "Financeiro", Icon: CurrencyDollarSimple, href: "/financeiro" },
-  { key: "pedagogico", label: "Pedagógico", Icon: GraduationCap, href: "/pedagogico" },
+  { key: "dashboard", label: "Visão Geral", Icon: SquaresFour, href: "/manager/dashboard" },
+  { key: "alunos", label: "Alunos", Icon: Users, href: "/manager/alunos" },
+  { key: "financeiro", label: "Financeiro", Icon: CurrencyDollarSimple, href: "/manager/financeiro" },
+  { key: "pedagogico", label: "Pedagógico", Icon: GraduationCap, href: "/manager/pedagogico" },
 ]
 
 const MOBILE_BOTTOM: NavItem[] = NAV_ITEMS
@@ -50,14 +50,14 @@ function subscribeSidebarCollapsed(onStoreChange: () => void) {
 }
 
 function resolveActiveKey(pathname: string): string {
-  const seg = pathname.split("/").filter(Boolean)[0] ?? "visao-geral"
+  const seg = pathname.split("/").filter(Boolean)[1] ?? "dashboard"
   const known = NAV_ITEMS.map((i) => i.key)
-  return known.includes(seg) ? seg : "visao-geral"
+  return known.includes(seg) ? seg : "dashboard"
 }
 
 function LogoBox({ expanded }: { expanded: boolean }) {
   return (
-    <Link href="/visao-geral" className="flex min-w-0 shrink-0 items-center">
+    <Link href="/manager/dashboard" className="flex min-w-0 shrink-0 items-center">
       <div
         className="flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white transition-all duration-250"
         style={{ width: expanded ? 148 : 40, height: 40 }}
@@ -146,7 +146,7 @@ function DesktopSidebar({ collapsed, onToggle, activeKey }: { collapsed: boolean
 function MobileTopBar({ onMenuOpen }: { onMenuOpen: () => void }) {
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between px-4 lg:hidden" style={{ background: NAVY }}>
-      <Link href="/visao-geral" className="flex items-center">
+      <Link href="/manager/dashboard" className="flex items-center">
         <div className="flex items-center justify-center rounded-lg bg-white px-2 py-1">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 26, width: "auto" }} />

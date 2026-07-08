@@ -55,7 +55,7 @@ function AlertsSection() {
       tone: "warning",
       text: `${OVERVIEW_KPIS.essaysOverdueSla} redações passaram do prazo de correção (SLA).`,
       actionLabel: "Ver redações",
-      href: "/pedagogico",
+      href: "/manager/pedagogico",
     })
   }
   if (OVERVIEW_KPIS.paymentAlerts.failedLast7d > 0) {
@@ -63,7 +63,7 @@ function AlertsSection() {
       tone: "error",
       text: `${OVERVIEW_KPIS.paymentAlerts.failedLast7d} pagamentos falharam nos últimos 7 dias.`,
       actionLabel: "Ver financeiro",
-      href: "/financeiro",
+      href: "/manager/financeiro",
     })
   }
   if (OVERVIEW_KPIS.paymentAlerts.expiringEnrollments7d > 0) {
@@ -71,7 +71,7 @@ function AlertsSection() {
       tone: "warning",
       text: `${OVERVIEW_KPIS.paymentAlerts.expiringEnrollments7d} matrículas expiram nos próximos 7 dias.`,
       actionLabel: "Ver alunos",
-      href: "/alunos",
+      href: "/manager/alunos",
     })
   }
   if (OVERVIEW_KPIS.studentsAtRisk > 0) {
@@ -79,7 +79,7 @@ function AlertsSection() {
       tone: "warning",
       text: `${OVERVIEW_KPIS.studentsAtRisk} alunos em risco de evasão (sem atividade recente).`,
       actionLabel: "Ver alunos",
-      href: "/alunos",
+      href: "/manager/alunos",
     })
   }
 
