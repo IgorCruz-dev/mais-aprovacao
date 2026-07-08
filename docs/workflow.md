@@ -115,6 +115,7 @@ git fetch --prune
 - Agente deve ler `docs/domain-ownership.md` antes de alterar dominio, `docs/api-contract.md` antes de alterar endpoint e `packages/db/prisma/schema.prisma` antes de alterar banco.
 - Alteracoes em dominio do outro dev exigem comunicacao antes de comecar.
 - Alteracoes em arquivos compartilhados exigem revisao conjunta quando afetarem contrato, schema, tipos, design system ou regras globais.
+- Alteracoes na convencao de rotas por papel exigem revisao conjunta. A convencao canonica atual e usar o papel como primeiro segmento real da URL (`/student`, `/teacher`, `/manager`, `/parent`, `/admin`); aliases devem ser redirects temporarios e nao devem ser usados em links internos.
 
 ## Arquivos compartilhados sensiveis
 

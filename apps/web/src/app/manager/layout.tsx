@@ -1,11 +1,14 @@
 import { ManagerChrome } from "@/components/navigation/ManagerChrome"
 import { ToastContainer } from "@/components/student/StudentSurface"
+import AreaGate from "@/components/auth/AreaGate"
 
 export default function ManagerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ManagerChrome>
-      {children}
-      <ToastContainer />
-    </ManagerChrome>
+    <AreaGate area="manager">
+      <ManagerChrome>
+        {children}
+        <ToastContainer />
+      </ManagerChrome>
+    </AreaGate>
   )
 }

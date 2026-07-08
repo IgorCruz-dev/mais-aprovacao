@@ -32,6 +32,9 @@ model User {
   poll_votes              PollVote[]
   question_attempts       QuestionAttempt[]
   exam_sessions           ExamSession[]
+  question_reports        QuestionReport[]
+  resolved_question_reports QuestionReport[]             @relation("QuestionReportResolver")
+  daily_usage             DailyUsage[]
   parent_links_as_parent  ParentStudentLink[]          @relation("ParentLinksAsParent")
   parent_links_as_student ParentStudentLink[]          @relation("ParentLinksAsStudent")
   announcements           Announcement[]               @relation("AnnouncementCreator")
@@ -39,6 +42,7 @@ model User {
   gamification_streak     GamificationStreak?
   gamification_titles     GamificationTitle[]
   monthly_rankings        GamificationMonthlyRanking[]
+  security_logs           SecurityLog[]
 
   @@map("users")
 }
@@ -436,6 +440,8 @@ model Question {
 
   attempts             QuestionAttempt[]
   exam_session_answers ExamSessionAnswer[]
+  reports              QuestionReport[]
+  explanation          QuestionExplanation?
 
   @@index([subject, discipline])
   @@index([bank])
@@ -450,13 +456,17 @@ model QuestionAttempt {
   question_id     String   @db.Uuid
   selected_option String
   is_correct      Boolean
+  is_first_correct Boolean @default(false)
+  subject         String?
   time_spent_ms   Int?
   attempted_at    DateTime @default(now()) @db.Timestamptz
 
-  student  User     @relation(fields: [student_id], references: [id])
-  question Question @relation(fields: [question_id], references: [id])
+  student  User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
-  @@index([student_id, attempted_at])
+  @@index([student_id, question_id])
+  @@index([student_id, attempted_at(sort: Desc)])
+  @@index([question_id])
   @@map("question_attempts")
 }
 
@@ -464,10 +474,15 @@ model ExamSession {
   id                     String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   student_id             String            @db.Uuid
   course_id              String?           @db.Uuid
+  config                 Json              @default("{}")
+  question_ids           String[]          @default([]) @db.Uuid
   status                 ExamSessionStatus @default(in_progress)
-  total_questions        Int
-  correct_count          Int               @default(0)
-  score                  Float?
+  score                  Int?
+  correct_count          Int?
+  total_questions        Int?
+  time_taken_secs        Int?
+  tri_score              Decimal?          @db.Decimal(5, 1)
+  results_by_subject     Json              @default("{}")
   is_printed             Boolean           @default(false)
   answer_sheet_image_url String?
   ocr_status             String?
@@ -476,10 +491,13 @@ model ExamSession {
   created_at             DateTime          @default(now()) @db.Timestamptz
   updated_at             DateTime          @default(now()) @updatedAt @db.Timestamptz
 
-  student User                @relation(fields: [student_id], references: [id])
+  student User                @relation(fields: [student_id], references: [id], onDelete: Cascade)
   course  Course?             @relation(fields: [course_id], references: [id])
   answers ExamSessionAnswer[]
 
+  @@index([student_id, status])
+  @@index([student_id, started_at(sort: Desc)])
+  @@index([status])
   @@map("exam_sessions")
 }
 
@@ -493,15 +511,79 @@ model ExamSessionAnswer {
   id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   session_id      String    @db.Uuid
   question_id     String    @db.Uuid
+  order_index     Int
   selected_option String?
   is_correct      Boolean?
+  is_annulled     Boolean   @default(false)
   answered_at     DateTime? @db.Timestamptz
 
   session  ExamSession @relation(fields: [session_id], references: [id], onDelete: Cascade)
   question Question    @relation(fields: [question_id], references: [id])
 
   @@unique([session_id, question_id])
+  @@index([session_id, order_index])
   @@map("exam_session_answers")
+}
+
+model DailyUsage {
+  student_id        String   @db.Uuid
+  usage_date        DateTime @default(dbgenerated("CURRENT_DATE")) @db.Date
+  questions_count   Int      @default(0)
+  simulations_count Int      @default(0)
+
+  student User @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, usage_date])
+  @@map("daily_usage")
+}
+
+model QuestionReport {
+  id             String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  question_id    String                       @db.Uuid
+  student_id     String                       @db.Uuid
+  error_category QuestionReportErrorCategory
+  description    String?
+  status         QuestionReportStatus         @default(pending)
+  created_at     DateTime                     @default(now()) @db.Timestamptz
+  resolved_at    DateTime?                    @db.Timestamptz
+  resolved_by    String?                      @db.Uuid
+
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  student  User     @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  resolver User?    @relation("QuestionReportResolver", fields: [resolved_by], references: [id])
+
+  @@index([question_id])
+  @@index([student_id])
+  @@index([status])
+  @@index([created_at(sort: Desc)])
+  @@map("question_reports")
+}
+
+enum QuestionReportErrorCategory {
+  estrutural
+  conteudo
+  resposta
+  outro
+
+  @@map("question_report_error_category")
+}
+
+enum QuestionReportStatus {
+  pending
+  reviewing
+  resolved
+
+  @@map("question_report_status")
+}
+
+model QuestionExplanation {
+  question_id  String   @id @db.Uuid
+  explanation  String
+  generated_at DateTime @default(now()) @db.Timestamptz
+
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@map("question_explanations")
 }
 
 // ── REPERTÓRIO (importado do StudyTrack, com pgvector) ───────────────────────
@@ -638,6 +720,23 @@ model WebhookEvent {
 
   @@unique([source, event_id])
   @@map("webhook_events")
+}
+
+// ── SEGURANÇA ────────────────────────────────────────────────────────────────
+
+model SecurityLog {
+  id                BigInt   @id @default(autoincrement())
+  user_id           String?  @db.Uuid
+  event_type        String
+  event_description String?
+  metadata          Json     @default("{}")
+  created_at        DateTime @default(now()) @db.Timestamptz
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@index([user_id])
+  @@index([event_type])
+  @@map("security_logs")
 }
 
 // ── GAMIFICAÇÃO ──────────────────────────────────────────────────────────────

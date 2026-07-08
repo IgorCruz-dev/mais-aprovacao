@@ -259,9 +259,17 @@ Observacao: este endpoint existe no Fastify e no AI Service como health check op
 ### `GET /questions`
 
 - **Auth:** `autenticado`
-- **Query params:** `subject?: string`, `discipline?: string`, `bank?: "ENEM" | "UFU" | "UEG"`, `difficulty?: "easy" | "medium" | "hard"`, `exam_year?: number`, `limit?: number`, `cursor?: string`
+- **Query params:** `subject?: string`, `discipline?: string`, `topic?: string`, `bank?: "ENEM" | "UFU" | "UEG" | "UFG" | "UNESP" | string`, `difficulty?: "easy" | "medium" | "hard"`, `exam_year?: number`, `tab?: "todo" | "done"`, `limit?: number`, `cursor?: string`
 - **Request body:** nenhum
 - **Response body:** `questions: QuestionPublic[]`, `next_cursor: string | null`
+- **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`
+
+### `GET /questions/topics`
+
+- **Auth:** `autenticado`
+- **Query params:** `subject?: string`, `bank?: "ENEM" | "UFU" | "UEG" | "UFG" | "UNESP" | string`
+- **Request body:** nenhum
+- **Response body:** `topics: { name: string, count: number }[]`
 - **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`
 
 ### `GET /questions/:id`
@@ -277,16 +285,18 @@ Observacao: este endpoint existe no Fastify e no AI Service como health check op
 - **Auth:** `student`
 - **Query params:** nenhum
 - **Request body:** `question_id: string`, `selected_option: string`, `time_spent_ms?: number`
-- **Response body:** `attempt: { id: string, question_id: string, selected_option: string, is_correct: boolean, correct_alternative: string, time_spent_ms: number | null, attempted_at: string, points_awarded: number }`
-- **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `404 QUESTION_NOT_FOUND`, `409 QUESTION_NOT_AVAILABLE`
+- **Response body:** `attempt: { id: string, question_id: string, selected_option: string, is_correct: boolean, is_first_correct: boolean, already_answered_correctly: boolean, correct_alternative: string | null, explanation: string, time_spent_ms: number | null, attempted_at: string, points_awarded: number }`
+- **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 CONTENT_LOCKED`, `404 QUESTION_NOT_FOUND`, `409 QUESTION_NOT_AVAILABLE`
+
+Observacoes: qualquer primeiro acerto correto no banco de questoes vale `3` pontos e gera `gamification_points`. Tentativas repetidas sao registradas, mas nao pontuam de novo.
 
 ### `POST /exam-sessions`
 
 - **Auth:** `student`
 - **Query params:** nenhum
-- **Request body:** `course_id?: string`, `question_ids: string[]`, `is_printed?: boolean`
-- **Response body:** `exam_session: { id: string, student_id: string, course_id: string | null, status: "in_progress", total_questions: number, correct_count: number, score: number | null, is_printed: boolean, started_at: string }`, `answers: { id: string, question_id: string, selected_option: string | null, is_correct: boolean | null }[]`
-- **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 CONTENT_LOCKED`, `404 QUESTION_NOT_FOUND`
+- **Request body:** `course_id?: string`, `question_ids?: string[]`, `config?: { format?: "linguagens" | "humanas" | "natureza" | "matematica" | "dia1" | "dia2" | "completo" | "custom", bank?: string, year?: number, subject?: string, difficulty?: "easy" | "medium" | "hard" | "misto" | string, qty?: number, time_limit_secs?: number }`, `is_printed?: boolean`
+- **Response body:** `exam_session: { id: string, student_id: string, course_id: string | null, status: "in_progress", total_questions: number, correct_count: number | null, score: number | null, is_printed: boolean, started_at: string, config: object }`, `answers: { id: string, question_id: string, order_index: number, selected_option: string | null, is_correct: boolean | null, is_annulled: boolean }[]`, `questions: QuestionPublic[]`
+- **Erros:** `400 VALIDATION_ERROR`, `400 INVALID_FORMAT`, `401 UNAUTHORIZED`, `403 CONTENT_LOCKED`, `404 QUESTION_NOT_FOUND`, `404 NO_QUESTIONS_FOUND`
 
 ### `GET /exam-sessions/me`
 
@@ -301,7 +311,7 @@ Observacao: este endpoint existe no Fastify e no AI Service como health check op
 - **Auth:** `student`
 - **Query params:** nenhum
 - **Request body:** nenhum
-- **Response body:** `exam_session: { id: string, student_id: string, course_id: string | null, status: string, total_questions: number, correct_count: number, score: number | null, is_printed: boolean, answer_sheet_image_url: string | null, ocr_status: string | null, started_at: string, finished_at: string | null }`, `answers: { id: string, question_id: string, selected_option: string | null, is_correct: boolean | null, answered_at: string | null, question: QuestionPublic }[]`
+- **Response body:** `exam_session: { id: string, student_id: string, course_id: string | null, status: string, total_questions: number | null, correct_count: number | null, score: number | null, tri_score: number | null, results_by_subject: object, config: object, is_printed: boolean, answer_sheet_image_url: string | null, ocr_status: string | null, started_at: string, finished_at: string | null }`, `answers: { id: string, question_id: string, order_index: number, selected_option: string | null, is_correct: boolean | null, is_annulled: boolean, answered_at: string | null, question: QuestionPublic }[]`
 - **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 EXAM_SESSION_NOT_FOUND`
 
 ### `PATCH /exam-sessions/:id/answers/:questionId`
@@ -316,9 +326,33 @@ Observacao: este endpoint existe no Fastify e no AI Service como health check op
 
 - **Auth:** `student`
 - **Query params:** nenhum
+- **Request body:** `time_taken_secs?: number`
+- **Response body:** `exam_session: { id: string, status: "completed", total_questions: number, correct_count: number, score: number, percentage: number, tri_score: number | null, results_by_subject: object, results_by_bank: object, annulled_question_ids: string[], annulled_questions_count: number, time_taken_secs: number | null, finished_at: string, points_awarded: 0 }`
+- **Erros:** `400 MIN_ANSWERS_NOT_REACHED` com `answered_count`, `minimum_required`, `total_questions`; `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 EXAM_SESSION_NOT_FOUND`, `409 EXAM_SESSION_CLOSED`
+
+### `GET /exam-sessions/:id/review`
+
+- **Auth:** `student`
+- **Query params:** nenhum
 - **Request body:** nenhum
-- **Response body:** `exam_session: { id: string, status: "completed", total_questions: number, correct_count: number, score: number, finished_at: string, points_awarded: number }`
-- **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 EXAM_SESSION_NOT_FOUND`, `409 EXAM_SESSION_CLOSED`
+- **Response body:** `review: { session_id: string, annulled_question_ids: string[], annulled_questions_count: number, explanations: Record<string, { explanation: string, correct_answer: string | null, user_answer: string | null, is_correct: boolean, is_annulled: boolean, subject: string | null }> }`
+- **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 EXAM_SESSION_NOT_FOUND`
+
+### `POST /question-reports`
+
+- **Auth:** `student`
+- **Query params:** nenhum
+- **Request body:** `question_id: string`, `error_category: "estrutural" | "conteudo" | "resposta" | "outro"`, `description?: string`
+- **Response body:** `report: { id: string, question_id: string, error_category: string, description: string | null, status: "pending", created_at: string }`
+- **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 CONTENT_LOCKED`, `404 QUESTION_NOT_FOUND`, `409 QUESTION_REPORT_ALREADY_OPEN`
+
+### `GET /question-reports/me`
+
+- **Auth:** `student`
+- **Query params:** `limit?: number`, `cursor?: string`
+- **Request body:** nenhum
+- **Response body:** `reports: { id: string, question_id: string, error_category: string, description: string | null, status: string, created_at: string, resolved_at: string | null }[]`, `next_cursor: string | null`
+- **Erros:** `401 UNAUTHORIZED`
 
 ### `POST /exam-sessions/:id/answer-sheet`
 
@@ -579,6 +613,23 @@ Jobs obrigatorios: `daily-streak-check` e `monthly-ranking-reset`.
 - **Request body:** `role?: UserProfile.role`, `name?: string`, `avatar_url?: string | null`
 - **Response body:** `user: UserProfile`
 - **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 USER_NOT_FOUND`
+
+### `GET /admin/parent-links`
+
+- **Auth:** `admin`
+- **Query params:** `verified?: boolean`, `limit?: number`, `cursor?: string`
+- **Request body:** nenhum
+- **Response body:** `links: { id: string, verified: boolean, created_at: string, parent: { id: string, name: string, email: string }, student: { id: string, name: string, email: string } }[]`, `next_cursor: string | null`
+- **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`
+
+### `PATCH /admin/parent-links/:id/verify`
+
+- **Auth:** `admin`
+- **Query params:** nenhum
+- **Request body:** nenhum
+- **Response body:** `link: { id: string, parent_user_id: string, student_user_id: string, verified: boolean, created_at: string }`
+- **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`, `404 LINK_NOT_FOUND`
+- **Observação:** idempotente — verificar um vínculo já verificado retorna o vínculo sem erro.
 
 ### `POST /admin/announcements`
 

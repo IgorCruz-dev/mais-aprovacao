@@ -116,7 +116,7 @@ function ContinueCard() {
 function QuickActions() {
   const actions = [
     { icon: Books, title: "Questões", subtitle: "Banco livre por matéria", color: MODULES.questoes, href: "/questoes" },
-    { icon: Exam, title: "Simulado", subtitle: "Prova cronometrada", color: MODULES.simulados, href: "/simulados" },
+    { icon: Exam, title: "Simulado", subtitle: "Prova cronometrada", color: MODULES.simulados, href: "/student/simulados" },
     { icon: PencilLine, title: "Redação", subtitle: "Enviar e receber correção", color: MODULES.redacoes, href: "/redacoes" },
   ]
   return (

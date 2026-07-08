@@ -59,7 +59,7 @@ docs/
 ## 4. Convenções de Nomenclatura
 
 - **Arquivos TypeScript:** `camelCase.ts` para utils, `PascalCase.tsx` para componentes React
-- **Rotas Next.js:** `kebab-case` nas pastas (ex: `app/student/banco-de-questoes/page.tsx`)
+- **Rotas Next.js:** `kebab-case` nas pastas (ex: `app/student/banco-de-questoes/page.tsx`). Áreas autenticadas usam sempre o papel como primeiro segmento real da URL: `/student`, `/teacher`, `/manager`, `/parent`, `/admin`. Não use route groups `(student)`, `(teacher)`, `(manager)`, `(parent)` ou `(admin)` para esconder o papel da URL.
 - **Tabelas banco:** `snake_case` plural (ex: `course_lessons`, `lesson_progress`)
 - **Campos Prisma:** `snake_case` direto no modelo — segue convenção do schema atual
 - **Variáveis TypeScript:** `camelCase`
@@ -511,17 +511,18 @@ app/
   parent/
     layout.tsx
     dashboard/page.tsx          → /parent/dashboard
-    acompanhamento/[studentId]/page.tsx
+    alunos/[studentId]/page.tsx → /parent/alunos/[studentId]
   admin/
     layout.tsx
-    dashboard/page.tsx          → /admin/dashboard
-    questoes/page.tsx            → revisão de questões geradas por IA
-    usuarios/page.tsx
+    page.tsx                    → /admin
+    vinculos/page.tsx           → /admin/vinculos
   api/                           → Route Handlers (proxy para apps/api)
     courses/[...]/route.ts
     lessons/[...]/route.ts
     webhooks/                    → NÃO são proxy — processam diretamente
 ```
+
+Aliases antigos ou transicionais como `/gestao`, `/professor`, `/responsavel` e `/simulados` podem existir apenas como redirects temporários para as rotas canônicas. Links internos, `ROLE_TO_DASHBOARD`, navegação e middleware devem apontar sempre para `/{role}/...`.
 
 ### Middleware RBAC
 

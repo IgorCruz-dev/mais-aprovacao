@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Menu, X } from "lucide-react"
 
 const NAV_LINKS = [
@@ -49,12 +50,12 @@ export function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden md:flex items-center gap-3">
-          <a
+          <Link
             href="/sign-in"
             className="border border-[#0A0F1E] rounded-full px-4 py-1.5 text-sm text-[#0A0F1E] hover:bg-[#0A0F1E] hover:text-white transition-colors"
           >
             Entrar
-          </a>
+          </Link>
           <a
             href="#cursos"
             className="bg-[#F5C518] text-[#03050D] rounded-full px-4 py-1.5 text-sm font-semibold hover:bg-yellow-400 transition-colors"
@@ -87,12 +88,12 @@ export function Navbar() {
             </a>
           ))}
           <div className="flex flex-col gap-2 pt-2 border-t border-[#E5E8EF]">
-            <a
+            <Link
               href="/sign-in"
               className="border border-[#0A0F1E] rounded-full px-4 py-2 text-sm text-[#0A0F1E] text-center hover:bg-[#0A0F1E] hover:text-white transition-colors"
             >
               Entrar
-            </a>
+            </Link>
             <a
               href="#cursos"
               onClick={() => setMobileOpen(false)}
