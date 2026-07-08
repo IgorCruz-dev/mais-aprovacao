@@ -4,7 +4,9 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSignIn } from "@clerk/nextjs"
+import type { UserProfile } from "@mais-aprovacao/types"
 import { sanitizeRedirectUrl } from "@mais-aprovacao/utils"
+import { ROLE_TO_DASHBOARD } from "@mais-aprovacao/utils"
 import { APROVA } from "@/components/student/StudentSurface"
 
 function clerkErrorMessage(err: { longMessage?: string; message: string } | null): string {
@@ -21,10 +23,36 @@ export default function SignInPage() {
   const { signIn } = useSignIn()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [code, setCode] = useState("")
+  const [step, setStep] = useState<"password" | "code">("password")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const redirectUrl = sanitizeRedirectUrl(searchParams.get("redirect_url")) ?? "/"
+
+  async function resolvePostLoginUrl() {
+    if (redirectUrl !== "/") return redirectUrl
+    const res = await fetch("/api/proxy/me", { cache: "no-store" })
+    if (!res.ok) return "/"
+    const data = (await res.json()) as { user: UserProfile }
+    return ROLE_TO_DASHBOARD[data.user.role]
+  }
+
+  async function finishSignIn() {
+    if (!signIn) return
+    let targetUrl = redirectUrl
+    const finalized = await signIn.finalize({
+      navigate: async ({ decorateUrl }) => {
+        targetUrl = await resolvePostLoginUrl()
+        router.push(decorateUrl(targetUrl).toString())
+      },
+    })
+    if (finalized.error) {
+      setError(clerkErrorMessage(finalized.error))
+      return
+    }
+    router.push(await resolvePostLoginUrl())
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -35,32 +63,55 @@ export default function SignInPage() {
     try {
       const created = await signIn.create({
         identifier: email,
+        password,
       })
       if (created.error) {
         setError(clerkErrorMessage(created.error))
         return
       }
 
-      const verified = await signIn.password({ password })
+      if (signIn.status === "needs_client_trust" || signIn.status === "needs_second_factor") {
+        const sent = await signIn.emailCode.sendCode()
+        if (sent.error) {
+          setError(clerkErrorMessage(sent.error))
+          return
+        }
+        setStep("code")
+        return
+      }
+
+      if (signIn.status !== "complete") {
+        setError(`Login por senha não completou. Status Clerk: ${signIn.status}.`)
+        return
+      }
+
+      await finishSignIn()
+    } catch (err) {
+      const clerkErr = err as { errors?: Array<{ longMessage?: string; message: string }> }
+      const first = clerkErr.errors?.[0]
+      setError(first ? clerkErrorMessage(first) : err instanceof Error ? err.message : "Erro inesperado. Tente novamente.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault()
+    if (!signIn || loading) return
+
+    setError(null)
+    setLoading(true)
+    try {
+      const verified = await signIn.emailCode.verifyCode({ code: code.trim() })
       if (verified.error) {
         setError(clerkErrorMessage(verified.error))
         return
       }
-
-      if (signIn.status === "complete") {
-        const finalized = await signIn.finalize()
-        if (finalized.error) {
-          setError(clerkErrorMessage(finalized.error))
-          return
-        }
-        router.push(redirectUrl)
-        return
-      }
-
-      setError("Não foi possível concluir o login por senha. Verifique as configurações da conta.")
+      await finishSignIn()
     } catch (err) {
       const clerkErr = err as { errors?: Array<{ longMessage?: string; message: string }> }
-      setError(clerkErrorMessage(clerkErr.errors?.[0] ?? null))
+      const first = clerkErr.errors?.[0]
+      setError(first ? clerkErrorMessage(first) : err instanceof Error ? err.message : "Erro inesperado. Tente novamente.")
     } finally {
       setLoading(false)
     }
@@ -72,9 +123,10 @@ export default function SignInPage() {
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-mais-aprovacao.jpg" alt="+Aprovação" style={{ height: 40, width: "auto" }} />
-          <h1 className="text-xl font-black" style={{ color: APROVA.ink }}>Entrar</h1>
+          <h1 className="text-xl font-black" style={{ color: APROVA.ink }}>{step === "password" ? "Entrar" : "Confirmar código"}</h1>
         </div>
 
+        {step === "password" ? (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-[13px] font-bold" style={{ color: APROVA.inkMuted }}>Email</span>
@@ -117,6 +169,45 @@ export default function SignInPage() {
             <Link href="/sign-up" className="font-bold" style={{ color: APROVA.blue }}>Criar conta</Link>
           </p>
         </form>
+        ) : (
+          <form onSubmit={handleVerifyCode} className="flex flex-col gap-4">
+            <p className="text-[13.5px]" style={{ color: APROVA.inkMuted }}>
+              Enviamos um código de segurança para <strong style={{ color: APROVA.ink }}>{email}</strong>.
+            </p>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-bold" style={{ color: APROVA.inkMuted }}>Código</span>
+              <input
+                required
+                inputMode="numeric"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className={`${inputClass} text-center text-[18px] tracking-[0.4em]`}
+                style={inputStyle}
+                autoComplete="one-time-code"
+              />
+            </label>
+
+            {error && <p className="text-[13px] font-semibold" style={{ color: APROVA.error }}>{error}</p>}
+
+            <button
+              type="submit"
+              disabled={!signIn || loading}
+              className="rounded-xl py-3 text-[14px] font-extrabold text-white transition-opacity disabled:opacity-60"
+              style={{ background: APROVA.blue }}
+            >
+              {loading ? "Verificando..." : "Confirmar e entrar"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep("password")}
+              className="rounded-xl border py-3 text-[14px] font-extrabold"
+              style={{ borderColor: "#E2E6F0", color: APROVA.ink }}
+            >
+              Voltar
+            </button>
+          </form>
+        )}
       </div>
     </main>
   )
