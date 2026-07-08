@@ -49,7 +49,7 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Autenticado em landing/sign-in/sign-up → manda pro dashboard da role.
   if (isLanding(req) || isAuthPage(req)) {
-    return NextResponse.redirect(new URL(role ? ROLE_TO_DASHBOARD[role] : "/student/dashboard", req.url));
+    return NextResponse.redirect(new URL(role ? ROLE_TO_DASHBOARD[role] : "/dashboard", req.url));
   }
 
   // Sem claim de role, deixa passar: a camada 2 (layout AreaGate) resolve pela API

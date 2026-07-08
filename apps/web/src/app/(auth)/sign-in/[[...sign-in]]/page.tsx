@@ -4,9 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useSignIn } from "@clerk/nextjs"
-import type { UserProfile } from "@mais-aprovacao/types"
 import { sanitizeRedirectUrl } from "@mais-aprovacao/utils"
-import { ROLE_TO_DASHBOARD } from "@mais-aprovacao/utils"
 import { APROVA } from "@/components/student/StudentSurface"
 
 function clerkErrorMessage(err: { longMessage?: string; message: string } | null): string {
@@ -30,28 +28,20 @@ export default function SignInPage() {
 
   const redirectUrl = sanitizeRedirectUrl(searchParams.get("redirect_url")) ?? "/"
 
-  async function resolvePostLoginUrl() {
-    if (redirectUrl !== "/") return redirectUrl
-    const res = await fetch("/api/proxy/me", { cache: "no-store" })
-    if (!res.ok) return "/"
-    const data = (await res.json()) as { user: UserProfile }
-    return ROLE_TO_DASHBOARD[data.user.role]
-  }
+  const postLoginUrl = redirectUrl === "/" ? "/dashboard" : redirectUrl
 
   async function finishSignIn() {
     if (!signIn) return
-    let targetUrl = redirectUrl
     const finalized = await signIn.finalize({
       navigate: async ({ decorateUrl }) => {
-        targetUrl = await resolvePostLoginUrl()
-        router.push(decorateUrl(targetUrl).toString())
+        router.push(decorateUrl(postLoginUrl).toString())
       },
     })
     if (finalized.error) {
       setError(clerkErrorMessage(finalized.error))
       return
     }
-    router.push(await resolvePostLoginUrl())
+    router.push(postLoginUrl)
   }
 
   async function handleSubmit(e: React.FormEvent) {
