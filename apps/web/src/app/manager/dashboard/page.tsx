@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   UsersThree, CurrencyDollarSimple, Fire, PencilLine, VideoCamera, CalendarBlank,
+  Copy, ChalkboardTeacher, UserCircle,
 } from "@phosphor-icons/react"
 import {
   APROVA, BentoCard, NavyCard, SectionTitle, ProgressBar, GradientAreaChart,
@@ -57,6 +58,55 @@ function GreetingHero() {
         </div>
       </div>
     </NavyCard>
+  )
+}
+
+const INVITE_ROLES = [
+  { label: "Aluno", role: "student", Icon: UsersThree },
+  { label: "Responsável", role: "parent", Icon: UserCircle },
+  { label: "Professor", role: "teacher", Icon: ChalkboardTeacher },
+] as const
+
+function SignupInviteLinks() {
+  const [copiedRole, setCopiedRole] = useState<string | null>(null)
+  const origin = typeof window === "undefined" ? "" : window.location.origin
+
+  async function copyLink(role: string) {
+    const url = `${origin}/sign-up?role=${role}`
+    await navigator.clipboard.writeText(url)
+    setCopiedRole(role)
+    window.setTimeout(() => setCopiedRole(null), 1800)
+  }
+
+  return (
+    <BentoCard>
+      <SectionTitle title="Links de cadastro" kicker="Convites" />
+      <div className="grid gap-2">
+        {INVITE_ROLES.map(({ label, role, Icon }) => {
+          const url = `${origin}/sign-up?role=${role}`
+          return (
+            <div key={role} className="flex flex-col gap-2 rounded-xl border border-[#EEF1F7] p-3 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ background: APROVA.blueSoft }}>
+                  <Icon size={18} weight="fill" color={APROVA.blue} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12.5px] font-extrabold" style={{ color: APROVA.ink }}>{label}</p>
+                  <p className="truncate text-[11.5px]" style={{ color: APROVA.inkMuted }}>{url}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => void copyLink(role)}
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-[12px] font-extrabold text-white"
+                style={{ background: APROVA.blue }}
+              >
+                <Copy size={15} weight="bold" /> {copiedRole === role ? "Copiado" : "Copiar"}
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </BentoCard>
   )
 }
 
@@ -258,6 +308,7 @@ export default function ManagerDashboardPage() {
 
         <div className="contents lg:flex lg:flex-col lg:gap-5">
           <RevealItem className="order-3 lg:order-none"><RevenueGoalCard period={period} /></RevealItem>
+          <RevealItem className="order-4 lg:order-none"><SignupInviteLinks /></RevealItem>
           <RevealItem className="order-4 lg:order-none"><RevenueChartCard period={period} /></RevealItem>
           <RevealItem className="order-6 lg:order-none"><AlertsSection /></RevealItem>
         </div>

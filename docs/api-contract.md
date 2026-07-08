@@ -7,7 +7,7 @@ Este documento e a fonte de verdade para compatibilidade entre `apps/web` (Next.
 - **Fastify API:** URL base externa definida em `NEXT_PUBLIC_API_URL`, sem prefixo `/api`. Em dev: `http://localhost:3001`.
 - **AI Service:** servico separado, URL interna definida em `AI_SERVICE_URL`. Todos os endpoints usam prefixo `/ai/...`.
 - **Next.js:** Server Components e Route Handlers podem chamar o Fastify via `NEXT_PUBLIC_API_URL`. Client Components nao chamam o Fastify diretamente para dados sensiveis; usam Route Handlers em `apps/web/src/app/api/...` como proxy autenticado.
-- **Auth Clerk:** endpoints Fastify autenticados recebem `Authorization: Bearer <clerk_session_token>`. A role vem de `publicMetadata.role`.
+- **Auth Clerk:** endpoints Fastify autenticados recebem `Authorization: Bearer <clerk_session_token>`. A role efetiva vem da tabela `users`; `publicMetadata.role` e usado apenas como cache para roteamento no frontend.
 - **Valores de Auth neste contrato:** `público`, `autenticado`, `student`, `teacher`, `manager`, `parent`, `admin`, `webhook`, `service`.
 - **IDs:** UUID em string, salvo quando indicado (`Repertoire.id` e `BigInt`).
 - **Datas:** ISO 8601 em UTC (`2026-06-26T20:00:00.000Z`). Campos `@db.Date` tambem trafegam como string ISO de data.
@@ -605,6 +605,15 @@ Jobs obrigatorios: `daily-streak-check` e `monthly-ranking-reset`.
 - **Request body:** nenhum
 - **Response body:** `users: UserProfile[]`, `next_cursor: string | null`
 - **Erros:** `401 UNAUTHORIZED`, `403 FORBIDDEN`
+
+### `POST /admin/users/managers`
+
+- **Auth:** `admin`
+- **Query params:** nenhum
+- **Request body:** `name: string`, `email: string`, `password: string`
+- **Response body:** `user: UserProfile`
+- **Erros:** `400 VALIDATION_ERROR`, `401 UNAUTHORIZED`, `403 FORBIDDEN`, `502 CLERK_CREATE_FAILED`
+- **Observação:** cria o usuário no Clerk com `publicMetadata.role = "manager"` e provisiona a linha local em `users`. `admin` continua sendo criado fora da plataforma por desenvolvedores.
 
 ### `PATCH /admin/users/:id`
 

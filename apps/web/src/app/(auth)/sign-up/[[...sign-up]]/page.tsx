@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useSignUp } from "@clerk/nextjs"
 import { GraduationCap, ChalkboardTeacher, UsersThree } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
@@ -26,10 +26,17 @@ const inputStyle = { borderColor: "#E2E6F0", background: "#fff", color: APROVA.i
 
 export default function SignUpPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { signUp } = useSignUp()
+  const requestedRole = searchParams.get("role")
+  const initialRole: SignupRole =
+    requestedRole === "teacher" || requestedRole === "parent" || requestedRole === "student"
+      ? requestedRole
+      : "student"
+  const roleLocked = requestedRole === "teacher" || requestedRole === "parent" || requestedRole === "student"
 
   const [step, setStep] = useState<"form" | "verify">("form")
-  const [role, setRole] = useState<SignupRole>("student")
+  const [role, setRole] = useState<SignupRole>(initialRole)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -109,20 +116,23 @@ export default function SignUpPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <fieldset>
               <legend className="mb-2 text-[13px] font-bold" style={{ color: APROVA.inkMuted }}>
-                Como você vai usar a plataforma?
+                Tipo de acesso
               </legend>
               <div className="flex flex-col gap-2">
                 {ROLE_OPTIONS.map(({ role: option, label, description, Icon }) => {
+                  if (roleLocked && option !== role) return null
                   const selected = role === option
                   return (
                     <button
                       key={option}
                       type="button"
-                      onClick={() => setRole(option)}
+                      onClick={() => !roleLocked && setRole(option)}
+                      disabled={roleLocked}
                       className="flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all"
                       style={{
                         borderColor: selected ? APROVA.blue : "#E2E6F0",
                         background: selected ? APROVA.blueSoft : "#fff",
+                        cursor: roleLocked ? "default" : "pointer",
                       }}
                     >
                       <Icon size={24} weight={selected ? "fill" : "regular"} color={selected ? APROVA.blue : APROVA.inkMuted} />

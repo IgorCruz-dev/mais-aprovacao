@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import { MagnifyingGlass } from "@phosphor-icons/react"
+import { MagnifyingGlass, UserPlus } from "@phosphor-icons/react"
 import type { UserProfile, UserRole } from "@mais-aprovacao/types"
 import { ROLE_LABELS } from "@mais-aprovacao/utils"
 import { APROVA, Avatar, BentoCard, PageHeader } from "@/components/student/StudentSurface"
@@ -26,6 +26,10 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole | "">("")
   const [search, setSearch] = useState("")
   const [savingId, setSavingId] = useState<string | null>(null)
+  const [creatingManager, setCreatingManager] = useState(false)
+  const [managerName, setManagerName] = useState("")
+  const [managerEmail, setManagerEmail] = useState("")
+  const [managerPassword, setManagerPassword] = useState("")
   const [notice, setNotice] = useState<string | null>(null)
   const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -111,6 +115,38 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleCreateManager(e: React.FormEvent) {
+    e.preventDefault()
+    if (creatingManager) return
+    setCreatingManager(true)
+    setNotice(null)
+    try {
+      const res = await fetch("/api/proxy/admin/users/managers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: managerName,
+          email: managerEmail,
+          password: managerPassword,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setNotice(data.error ?? "Erro ao criar gestor.")
+        return
+      }
+      setUsers((prev) => [data.user, ...prev])
+      setManagerName("")
+      setManagerEmail("")
+      setManagerPassword("")
+      setNotice(`Gestor ${data.user.name} criado com acesso ao painel de gestão.`)
+    } catch {
+      setNotice("Erro de conexão ao criar gestor.")
+    } finally {
+      setCreatingManager(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <PageHeader
@@ -118,6 +154,55 @@ export default function AdminUsersPage() {
         title="Usuários"
         subtitle="Gerencie os perfis da plataforma. A troca de role sincroniza banco e Clerk."
       />
+
+      <BentoCard className="mb-5">
+        <form onSubmit={handleCreateManager} className="grid gap-3 lg:grid-cols-[1fr_1fr_180px_auto] lg:items-end">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-bold" style={{ color: APROVA.inkMuted }}>Nome do gestor</span>
+            <input
+              required
+              value={managerName}
+              onChange={(e) => setManagerName(e.target.value)}
+              className="rounded-xl border px-3 py-2.5 text-[13px] outline-none focus:border-[#1B4DE4]"
+              style={{ borderColor: "#E2E6F0", background: "#fff", color: APROVA.ink }}
+              autoComplete="off"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-bold" style={{ color: APROVA.inkMuted }}>Email</span>
+            <input
+              required
+              type="email"
+              value={managerEmail}
+              onChange={(e) => setManagerEmail(e.target.value)}
+              className="rounded-xl border px-3 py-2.5 text-[13px] outline-none focus:border-[#1B4DE4]"
+              style={{ borderColor: "#E2E6F0", background: "#fff", color: APROVA.ink }}
+              autoComplete="off"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-bold" style={{ color: APROVA.inkMuted }}>Senha inicial</span>
+            <input
+              required
+              type="password"
+              minLength={8}
+              value={managerPassword}
+              onChange={(e) => setManagerPassword(e.target.value)}
+              className="rounded-xl border px-3 py-2.5 text-[13px] outline-none focus:border-[#1B4DE4]"
+              style={{ borderColor: "#E2E6F0", background: "#fff", color: APROVA.ink }}
+              autoComplete="new-password"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={creatingManager}
+            className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl px-4 text-[13px] font-extrabold text-white disabled:opacity-60"
+            style={{ background: APROVA.blue }}
+          >
+            <UserPlus size={16} weight="bold" /> {creatingManager ? "Criando..." : "Criar gestor"}
+          </button>
+        </form>
+      </BentoCard>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">

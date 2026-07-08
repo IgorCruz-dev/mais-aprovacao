@@ -14,6 +14,12 @@ const listUsersQuery = z.object({
   cursor: z.string().optional(),
 });
 
+const createManagerBody = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email().max(320),
+  password: z.string().min(8).max(200),
+});
+
 async function handleListUsers(req: FastifyRequest, reply: FastifyReply) {
   const parsed = listUsersQuery.safeParse(req.query);
   if (!parsed.success) {
@@ -134,9 +140,59 @@ async function handlePatchUser(
   return reply.send({ user: serializeUserProfile(updated) });
 }
 
+async function handleCreateManager(req: FastifyRequest, reply: FastifyReply) {
+  const parsed = createManagerBody.safeParse(req.body);
+  if (!parsed.success) {
+    return reply.status(400).send({ error: "Invalid body", code: "VALIDATION_ERROR" });
+  }
+
+  const email = parsed.data.email.trim().toLowerCase();
+  const name = parsed.data.name.trim();
+  const [firstName, ...rest] = name.split(/\s+/);
+  let clerkUserId: string | null = null;
+
+  try {
+    const clerkUser = await clerkClient.users.createUser({
+      emailAddress: [email],
+      password: parsed.data.password,
+      firstName,
+      lastName: rest.join(" ") || undefined,
+      publicMetadata: { role: "manager" },
+      unsafeMetadata: { created_by_admin_user_id: req.user.id },
+    });
+    clerkUserId = clerkUser.id;
+
+    const user = await prisma.user.upsert({
+      where: { clerk_id: clerkUser.id },
+      update: { email, name, role: "manager" },
+      create: { clerk_id: clerkUser.id, email, name, role: "manager" },
+    });
+
+    await logSecurityEvent({
+      user_id: user.id,
+      event_type: "MANAGER_CREATED",
+      event_description: "Gestor criado pelo painel admin.",
+      metadata: { created_by: req.user.id, email },
+    });
+
+    return reply.status(201).send({ user: serializeUserProfile(user) });
+  } catch (err) {
+    req.log.error({ err, email }, "falha ao criar gestor");
+    if (clerkUserId) {
+      try {
+        await clerkClient.users.deleteUser(clerkUserId);
+      } catch (rollbackErr) {
+        req.log.error({ err: rollbackErr, clerk_id: clerkUserId }, "falha ao reverter usuário Clerk após erro local");
+      }
+    }
+    return reply.status(502).send({ error: "Falha ao criar gestor no Clerk", code: "CLERK_CREATE_FAILED" });
+  }
+}
+
 export async function adminUserRoutes(app: FastifyInstance) {
   const guard = [requireAuth, requireRole("admin")];
 
   app.get("/admin/users", { preHandler: guard }, handleListUsers);
+  app.post("/admin/users/managers", { preHandler: guard }, handleCreateManager);
   app.patch<{ Params: { id: string } }>("/admin/users/:id", { preHandler: guard }, handlePatchUser);
 }
