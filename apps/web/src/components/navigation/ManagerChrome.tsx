@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  SquaresFour, Users, CurrencyDollarSimple, GraduationCap,
+  SquaresFour, Users, CurrencyDollarSimple, GraduationCap, CalendarBlank,
   CaretLeft, Bell, List, X,
 } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
@@ -19,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "alunos", label: "Alunos", Icon: Users, href: "/manager/alunos" },
   { key: "financeiro", label: "Financeiro", Icon: CurrencyDollarSimple, href: "/manager/financeiro" },
   { key: "pedagogico", label: "Pedagógico", Icon: GraduationCap, href: "/manager/pedagogico" },
+  { key: "eventos", label: "Eventos", Icon: CalendarBlank, href: "/manager/eventos" },
 ]
 
 const MOBILE_BOTTOM: NavItem[] = NAV_ITEMS

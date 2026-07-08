@@ -10,6 +10,7 @@ import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import {
   APROVA, MODULES, BentoCard, NavyCard, MilestoneBar,
   SectionTitle, ProgressBar, Avatar, Medal, useCountUp,
+  RevealGroup, RevealItem,
 } from "@/components/student/StudentSurface"
 import {
   STUDENT, CURRENT_LESSON, RACE, RACE_MILESTONES,
@@ -281,26 +282,26 @@ function RecentExams() {
 export default function DashboardPage() {
   const { greeting, atRisk } = useGreeting()
   return (
-    <div className="mx-auto max-w-[1240px] px-4 pt-4 lg:px-8 lg:pt-7">
-      <div className="mb-3 lg:mb-5"><GreetingHero greeting={greeting} atRisk={atRisk} /></div>
+    <RevealGroup className="mx-auto max-w-[1240px] px-4 pt-4 lg:px-8 lg:pt-7">
+      <RevealItem className="mb-3 lg:mb-5"><GreetingHero greeting={greeting} atRisk={atRisk} /></RevealItem>
 
       {/* mobile: flex com ordem por prioridade · desktop: 2 colunas independentes */}
       <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:gap-5">
         {/* coluna principal (desktop): vídeo → ações rápidas → atividade → últimos simulados */}
         <div className="contents lg:flex lg:flex-col lg:gap-5">
-          <div className="order-1 lg:order-none"><ContinueCard /></div>
-          <div className="order-2 lg:order-none"><QuickActions /></div>
-          <div className="order-6 lg:order-none"><ClassFeed /></div>
-          <div className="order-5 lg:order-none"><RecentExams /></div>
+          <RevealItem className="order-1 lg:order-none"><ContinueCard /></RevealItem>
+          <RevealItem className="order-2 lg:order-none"><QuickActions /></RevealItem>
+          <RevealItem className="order-6 lg:order-none"><ClassFeed /></RevealItem>
+          <RevealItem className="order-5 lg:order-none"><RecentExams /></RevealItem>
         </div>
 
         {/* sidebar (desktop): seu mês → corrida → ranking · "seu mês" oculto no mobile */}
         <div className="contents lg:flex lg:flex-col lg:gap-5">
-          <div className="hidden lg:block"><MonthSummary /></div>
-          <div className="order-3 lg:order-none"><RaceCard /></div>
-          <div className="order-4 lg:order-none"><ClassRanking /></div>
+          <RevealItem className="hidden lg:block"><MonthSummary /></RevealItem>
+          <RevealItem className="order-3 lg:order-none"><RaceCard /></RevealItem>
+          <RevealItem className="order-4 lg:order-none"><ClassRanking /></RevealItem>
         </div>
       </div>
-    </div>
+    </RevealGroup>
   )
 }

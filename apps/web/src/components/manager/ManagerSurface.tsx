@@ -8,12 +8,14 @@ import {
   APROVA, BentoCard, NavyCard, PageHeader, SectionTitle, ProgressBar,
   Sparkline, GradientAreaChart, Avatar, Chip, ChipRow, Segmented,
   PrimaryButton, EmptyState, useCountUp, ToastContainer, showToast,
+  RevealGroup, RevealItem, AnimatedNumber,
 } from "@/components/student/StudentSurface"
 
 export {
   APROVA, BentoCard, NavyCard, PageHeader, SectionTitle, ProgressBar,
   Sparkline, GradientAreaChart, Avatar, Chip, ChipRow, Segmented,
   PrimaryButton, EmptyState, useCountUp, ToastContainer, showToast,
+  RevealGroup, RevealItem, AnimatedNumber,
 }
 
 // ─── KpiCard ─────────────────────────────────────────────────────────────────
@@ -80,7 +82,7 @@ export function TrendPill({ deltaPct, goodDirection = "up" }: { deltaPct: number
 
 // ─── ManagerStatusBadge ──────────────────────────────────────────────────────
 
-type StatusDomain = "enrollment" | "payment" | "essay" | "liveClass"
+type StatusDomain = "enrollment" | "payment" | "essay" | "event"
 
 const STATUS_MAPS: Record<StatusDomain, Record<string, { bg: string; color: string; label: string }>> = {
   enrollment: {
@@ -103,7 +105,7 @@ const STATUS_MAPS: Record<StatusDomain, Record<string, { bg: string; color: stri
     seen: { bg: "#F0F2F7", color: APROVA.inkMuted, label: "Vista" },
     error: { bg: "#FDECEC", color: APROVA.error, label: "Erro" },
   },
-  liveClass: {
+  event: {
     scheduled: { bg: APROVA.blueSoft, color: APROVA.blue, label: "Agendado" },
     live: { bg: "#FDECEC", color: APROVA.error, label: "Ao vivo" },
     ended: { bg: "#F0F2F7", color: APROVA.inkMuted, label: "Encerrado" },
@@ -115,7 +117,7 @@ export function ManagerStatusBadge({ domain, status }: { domain: StatusDomain; s
   const s = STATUS_MAPS[domain][status] ?? { bg: "#F0F2F7", color: APROVA.inkMuted, label: status }
   return (
     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: s.bg, color: s.color }}>
-      {domain === "liveClass" && status === "live" && (
+      {domain === "event" && status === "live" && (
         <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.color, animation: "glowPulse 1.4s ease infinite" }} />
       )}
       {s.label}

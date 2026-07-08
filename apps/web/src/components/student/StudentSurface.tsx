@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useId, useRef } from "react"
+import { motion, useMotionValue, useMotionValueEvent, useSpring, type Variants } from "motion/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
 
@@ -32,6 +33,61 @@ export const MODULES = {
 
 export function faixaColor(pct: number) {
   return pct >= 70 ? APROVA.success : pct >= 40 ? APROVA.gold : APROVA.error
+}
+
+// ─── Reveal (fade + slide-up escalonado ao carregar) ─────────────────────────
+// Mesmo efeito do hero: cada bloco nasce com opacity:0/y:20 e sobe em cascata,
+// controlado pelo container pai via staggerChildren — não precisa de delay manual.
+
+const revealContainer: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.09, delayChildren: 0.04 } },
+}
+
+const revealItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } },
+}
+
+export function RevealGroup({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.div className={className} variants={revealContainer} initial="hidden" animate="show">
+      {children}
+    </motion.div>
+  )
+}
+
+export function RevealItem({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.div className={className} variants={revealItem}>
+      {children}
+    </motion.div>
+  )
+}
+
+// ─── AnimatedNumber (transição suave entre valores, ex: trocar filtro de período) ─
+// Diferente do useCountUp (que sempre sobe de 0), aqui o valor exibido desliza do
+// número atual para o novo com uma spring — sem resetar quando o filtro muda.
+
+export function AnimatedNumber({
+  value,
+  format = (v: number) => Math.round(v).toLocaleString("pt-BR"),
+  className,
+  style,
+}: {
+  value: number
+  format?: (v: number) => string
+  className?: string
+  style?: React.CSSProperties
+}) {
+  const motionValue = useMotionValue(value)
+  const spring = useSpring(motionValue, { stiffness: 320, damping: 30, mass: 0.4 })
+  const [display, setDisplay] = useState(() => format(value))
+
+  useEffect(() => { motionValue.set(value) }, [value, motionValue])
+  useMotionValueEvent(spring, "change", (v) => setDisplay(format(v)))
+
+  return <span className={className} style={style}>{display}</span>
 }
 
 // ─── useCountUp ──────────────────────────────────────────────────────────────
