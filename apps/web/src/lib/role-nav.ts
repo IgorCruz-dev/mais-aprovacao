@@ -18,6 +18,7 @@ import {
   User,
   UserGear,
   Users,
+  UsersThree,
   VideoCamera,
 } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
@@ -39,7 +40,16 @@ export const NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
     { key: "perfil", label: "Perfil", Icon: User, href: "/student/perfil" },
   ],
   teacher: [
-    { key: "inicio", label: "Início", Icon: House, href: "/teacher/dashboard" },
+    { key: "dashboard",   label: "Início",       Icon: House,         href: "/teacher/dashboard" },
+    { key: "turmas",      label: "Turmas",        Icon: UsersThree,    href: "/teacher/turmas" },
+    { key: "alunos",      label: "Alunos",        Icon: Student,       href: "/teacher/alunos" },
+    { key: "aulas",       label: "Aulas",         Icon: VideoCamera,   href: "/teacher/aulas" },
+    { key: "correcoes",   label: "Correções",     Icon: PencilLine,    href: "/teacher/correcoes" },
+    { key: "simulados",   label: "Simulados",     Icon: Exam,          href: "/teacher/simulados" },
+    { key: "desempenho",  label: "Desempenho",    Icon: ChartLineUp,   href: "/teacher/desempenho" },
+    { key: "comunicados", label: "Comunicados",   Icon: Megaphone,     href: "/teacher/comunicados" },
+    { key: "agenda",      label: "Agenda",        Icon: CalendarBlank, href: "/teacher/agenda" },
+    { key: "suporte",     label: "Suporte",       Icon: Question,      href: "/teacher/suporte" },
   ],
   manager: [
     { key: "dashboard", label: "Visão Geral", Icon: SquaresFour, href: "/manager/dashboard" },
@@ -67,7 +77,7 @@ export const NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
 export const MOBILE_NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
   student: NAV_BY_ROLE.student.filter((item) => ["dashboard", "questoes", "simulados", "redacoes"].includes(item.key)),
   manager: NAV_BY_ROLE.manager,
-  teacher: NAV_BY_ROLE.teacher,
+  teacher: NAV_BY_ROLE.teacher.filter((item) => ["dashboard", "turmas", "alunos", "correcoes"].includes(item.key)),
   parent: NAV_BY_ROLE.parent.filter((item) => ["dashboard", "alunos", "desempenho", "financeiro"].includes(item.key)),
   admin: NAV_BY_ROLE.admin,
 }
