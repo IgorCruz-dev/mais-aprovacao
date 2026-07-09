@@ -1,14 +1,14 @@
-import { StudentChrome } from "@/components/navigation/StudentChrome"
+import RoleChrome from "@/components/navigation/RoleChrome"
 import { ToastContainer } from "@/components/student/StudentSurface"
 import AreaGate from "@/components/auth/AreaGate"
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return (
     <AreaGate area="student">
-      <StudentChrome>
+      <RoleChrome role="student">
         {children}
         <ToastContainer />
-      </StudentChrome>
+      </RoleChrome>
     </AreaGate>
   )
 }
