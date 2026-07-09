@@ -7,7 +7,9 @@ import {
   GraduationCap,
   House,
   LinkSimple,
+  ListChecks,
   Medal,
+  Megaphone,
   PencilLine,
   Question,
   SquaresFour,
@@ -47,7 +49,14 @@ export const NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
     { key: "eventos", label: "Eventos", Icon: CalendarBlank, href: "/manager/eventos" },
   ],
   parent: [
-    { key: "meus-alunos", label: "Meus alunos", Icon: Student, href: "/parent/dashboard" },
+    { key: "dashboard",   label: "Visão geral",  Icon: House,                href: "/parent/dashboard" },
+    { key: "alunos",      label: "Alunos",        Icon: Student,              href: "/parent/alunos" },
+    { key: "desempenho",  label: "Desempenho",    Icon: ChartLineUp,          href: "/parent/desempenho" },
+    { key: "atividades",  label: "Atividades",    Icon: ListChecks,           href: "/parent/atividades" },
+    { key: "financeiro",  label: "Financeiro",    Icon: CurrencyDollarSimple, href: "/parent/financeiro" },
+    { key: "comunicados", label: "Comunicados",   Icon: Megaphone,            href: "/parent/comunicados" },
+    { key: "reunioes",    label: "Reuniões",      Icon: CalendarBlank,        href: "/parent/reunioes" },
+    { key: "suporte",     label: "Suporte",       Icon: Question,             href: "/parent/suporte" },
   ],
   admin: [
     { key: "usuarios", label: "Usuários", Icon: UserGear, href: "/admin" },
@@ -59,6 +68,6 @@ export const MOBILE_NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
   student: NAV_BY_ROLE.student.filter((item) => ["dashboard", "questoes", "simulados", "redacoes"].includes(item.key)),
   manager: NAV_BY_ROLE.manager,
   teacher: NAV_BY_ROLE.teacher,
-  parent: NAV_BY_ROLE.parent,
+  parent: NAV_BY_ROLE.parent.filter((item) => ["dashboard", "alunos", "desempenho", "financeiro"].includes(item.key)),
   admin: NAV_BY_ROLE.admin,
 }
