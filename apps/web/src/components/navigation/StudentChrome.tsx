@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { SignOutButton } from "@clerk/nextjs"
 import {
   House, Books, Exam, VideoCamera, PencilLine,
   Trophy, Medal, ChartLineUp, Question, User,
-  CaretLeft, Bell, List, X, Fire,
+  CaretLeft, Bell, List, X, Fire, SignOut,
 } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import { cn } from "@/lib/utils"
@@ -115,16 +116,26 @@ function SidebarNavItem({ item, active, expanded }: { item: NavItem; active: boo
 function UserFooter({ expanded }: { expanded: boolean }) {
   return (
     <div
-      className={cn("mt-auto flex shrink-0 items-center gap-2.5 pb-3 pt-3", !expanded ? "justify-center px-1" : "px-4")}
+      className={cn("mt-auto flex shrink-0 items-center gap-2.5 pb-3 pt-3", !expanded ? "flex-col justify-center px-1" : "px-4")}
       style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-[14px] font-black text-white" style={{ background: APROVA.blue, border: `2px solid ${APROVA.gold}` }}>
+      <Link
+        href="/student/perfil"
+        title={!expanded ? "Perfil" : undefined}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-display text-[14px] font-black text-white"
+        style={{ background: APROVA.blue, border: `2px solid ${APROVA.gold}` }}
+      >
         {STUDENT.initial}
-      </div>
-      <div className="min-w-0 overflow-hidden whitespace-nowrap transition-all duration-250" style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? 130 : 0 }}>
+      </Link>
+      <Link href="/student/perfil" className="min-w-0 flex-1 overflow-hidden whitespace-nowrap transition-all duration-250" style={{ opacity: expanded ? 1 : 0, maxWidth: expanded ? 130 : 0 }}>
         <p className="truncate text-[13px] font-bold leading-tight text-white">{STUDENT.name}</p>
         <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.45)" }}>Aluno</p>
-      </div>
+      </Link>
+      <SignOutButton redirectUrl="/sign-in">
+        <button title="Sair" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/5 hover:text-white">
+          <SignOut size={17} />
+        </button>
+      </SignOutButton>
     </div>
   )
 }

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { SignOutButton } from "@clerk/nextjs"
 import {
   User, CreditCard, Target, Clock, Lock, Sliders, Check,
   Camera, ArrowRight, SignOut,
@@ -168,9 +169,11 @@ export default function PerfilPage() {
             )
           })}
           <div className="mt-1 border-t pt-1" style={{ borderColor: "#F1F3F8" }}>
-            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left" style={{ color: APROVA.error }}>
-              <SignOut size={18} weight="bold" /> <span className="text-[13px] font-bold">Sair da conta</span>
-            </button>
+            <SignOutButton redirectUrl="/sign-in">
+              <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left" style={{ color: APROVA.error }}>
+                <SignOut size={18} weight="bold" /> <span className="text-[13px] font-bold">Sair da conta</span>
+              </button>
+            </SignOutButton>
           </div>
         </BentoCard>
 

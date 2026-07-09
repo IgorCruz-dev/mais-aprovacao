@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useSignIn } from "@clerk/nextjs"
+import { useClerk, useSignIn } from "@clerk/nextjs"
 import { sanitizeRedirectUrl } from "@mais-aprovacao/utils"
 import { APROVA } from "@/components/student/StudentSurface"
 
@@ -18,12 +18,14 @@ const inputStyle = { borderColor: "#E2E6F0", background: "#fff", color: APROVA.i
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { signOut } = useClerk()
   const { signIn } = useSignIn()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
   const [step, setStep] = useState<"password" | "code">("password")
   const [error, setError] = useState<string | null>(null)
+  const [alreadySignedIn, setAlreadySignedIn] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const redirectUrl = sanitizeRedirectUrl(searchParams.get("redirect_url")) ?? "/"
@@ -49,6 +51,7 @@ export default function SignInPage() {
     if (!signIn || loading) return
 
     setError(null)
+    setAlreadySignedIn(false)
     setLoading(true)
     try {
       const created = await signIn.create({
@@ -79,7 +82,13 @@ export default function SignInPage() {
     } catch (err) {
       const clerkErr = err as { errors?: Array<{ longMessage?: string; message: string }> }
       const first = clerkErr.errors?.[0]
-      setError(first ? clerkErrorMessage(first) : err instanceof Error ? err.message : "Erro inesperado. Tente novamente.")
+      const message = first ? clerkErrorMessage(first) : err instanceof Error ? err.message : "Erro inesperado. Tente novamente."
+      if (message.toLowerCase().includes("already signed in")) {
+        setAlreadySignedIn(true)
+        setError("Você já está logado neste navegador. Saia da conta atual para entrar com outra.")
+        return
+      }
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -144,6 +153,17 @@ export default function SignInPage() {
           </label>
 
           {error && <p className="text-[13px] font-semibold" style={{ color: APROVA.error }}>{error}</p>}
+
+          {alreadySignedIn && (
+            <button
+              type="button"
+              onClick={() => signOut({ redirectUrl: "/sign-in" })}
+              className="rounded-xl border py-3 text-[14px] font-extrabold"
+              style={{ borderColor: "#E2E6F0", color: APROVA.ink }}
+            >
+              Sair e entrar com outra conta
+            </button>
+          )}
 
           <button
             type="submit"
