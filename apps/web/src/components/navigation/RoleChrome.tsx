@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { SignOutButton } from "@clerk/nextjs"
-import { Bell, CaretLeft, List, SignOut, X } from "@phosphor-icons/react"
+import { CaretLeft, List, SignOut, X } from "@phosphor-icons/react"
 import type { UserRole } from "@mais-aprovacao/types"
 import { ROLE_LABELS } from "@mais-aprovacao/utils"
 import { APROVA } from "@/components/student/StudentSurface"
@@ -15,8 +15,6 @@ import { MOBILE_NAV_BY_ROLE, NAV_BY_ROLE, type RoleNavItem } from "@/lib/role-na
 const NAVY = APROVA.navy
 const NAVY_HOVER = "rgba(255,255,255,0.06)"
 const COLLAPSED_EVENT = "role-sidebar-collapsed-change"
-
-type RoleChromeVariant = "default" | "student" | "manager"
 
 function subscribeMounted() {
   return () => {}
@@ -60,12 +58,6 @@ function resolveActiveKey(pathname: string, items: RoleNavItem[]) {
     }
   }
   return best?.key ?? items[0]?.key ?? null
-}
-
-function variantForRole(role: UserRole): RoleChromeVariant {
-  if (role === "student") return "student"
-  if (role === "manager") return "manager"
-  return "default"
 }
 
 function RoleBadge({ role }: { role: UserRole }) {
@@ -197,7 +189,6 @@ function DesktopSidebar({
   onToggle,
   homeHref,
   profileHref,
-  collapsible,
 }: {
   role: UserRole
   items: RoleNavItem[]
@@ -206,10 +197,9 @@ function DesktopSidebar({
   onToggle: () => void
   homeHref: string
   profileHref?: string
-  collapsible: boolean
 }) {
   const [hovered, setHovered] = useState(false)
-  const expanded = !collapsible || !collapsed || hovered
+  const expanded = !collapsed || hovered
 
   return (
     <aside
@@ -220,16 +210,14 @@ function DesktopSidebar({
     >
       <div className="flex shrink-0 items-center justify-between gap-1 px-3 pb-3 pt-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="min-w-0 flex-1 overflow-hidden"><LogoBox href={homeHref} expanded={expanded} /></div>
-        {collapsible && (
-          <button
-            onClick={onToggle}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors"
-            style={{ color: "rgba(255,255,255,0.5)", opacity: expanded ? 1 : 0, pointerEvents: expanded ? "auto" : "none" }}
-            title={collapsed ? "Fixar aberta" : "Recolher"}
-          >
-            <CaretLeft size={16} style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.3s ease" }} />
-          </button>
-        )}
+        <button
+          onClick={onToggle}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors"
+          style={{ color: "rgba(255,255,255,0.5)", opacity: expanded ? 1 : 0, pointerEvents: expanded ? "auto" : "none" }}
+          title={collapsed ? "Fixar aberta" : "Recolher"}
+        >
+          <CaretLeft size={16} style={{ transform: collapsed ? "rotate(180deg)" : "none", transition: "transform 0.3s ease" }} />
+        </button>
       </div>
       <div className="flex shrink-0 px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <RoleBadge role={role} />
@@ -244,7 +232,7 @@ function DesktopSidebar({
   )
 }
 
-function MobileTopBar({ role, variant, homeHref, onMenuOpen }: { role: UserRole; variant: RoleChromeVariant; homeHref: string; onMenuOpen: () => void }) {
+function MobileTopBar({ role, homeHref, onMenuOpen }: { role: UserRole; homeHref: string; onMenuOpen: () => void }) {
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between px-4 lg:hidden" style={{ background: NAVY }}>
       <Link href={homeHref} className="flex items-center">
@@ -254,8 +242,7 @@ function MobileTopBar({ role, variant, homeHref, onMenuOpen }: { role: UserRole;
         </div>
       </Link>
       <div className="flex items-center gap-1">
-        {variant === "default" && <RoleBadge role={role} />}
-        {variant !== "default" && <button className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70"><Bell size={18} /></button>}
+        <RoleBadge role={role} />
         <button onClick={onMenuOpen} className="flex h-9 w-9 items-center justify-center rounded-lg text-white/70">
           <List size={20} />
         </button>
@@ -359,15 +346,12 @@ export function RoleChrome({ role, children }: { role: UserRole; children: React
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const navRole = user.role === "admin" ? "admin" : role
-  const variant = variantForRole(navRole)
   const items = NAV_BY_ROLE[navRole]
-  const mobileItems = MOBILE_NAV_BY_ROLE[navRole] ?? []
+  const mobileItems = MOBILE_NAV_BY_ROLE[navRole] ?? items
   const activeKey = resolveActiveKey(pathname, items)
   const homeHref = items[0]?.href ?? "/dashboard"
   const profileHref = navRole === "student" ? "/student/perfil" : undefined
   const profileInitial = (user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()
-  const collapsible = variant !== "default"
-  const hasBottomNav = mobileItems.length > 0
 
   const toggleCollapse = () => {
     localStorage.setItem(collapsedKey(role), String(!collapsed))
@@ -393,11 +377,10 @@ export function RoleChrome({ role, children }: { role: UserRole; children: React
         onToggle={toggleCollapse}
         homeHref={homeHref}
         profileHref={profileHref}
-        collapsible={collapsible}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <MobileTopBar role={navRole} variant={variant} homeHref={homeHref} onMenuOpen={() => setDrawerOpen(true)} />
-        <main key={pathname} className={cn("flex-1 overflow-y-auto lg:pb-8", hasBottomNav ? "pb-20" : "pb-8")} style={{ animation: "pageIn 0.24s ease" }}>
+        <MobileTopBar role={navRole} homeHref={homeHref} onMenuOpen={() => setDrawerOpen(true)} />
+        <main key={pathname} className="flex-1 overflow-y-auto pb-20 lg:pb-8" style={{ animation: "pageIn 0.24s ease" }}>
           {children}
         </main>
       </div>

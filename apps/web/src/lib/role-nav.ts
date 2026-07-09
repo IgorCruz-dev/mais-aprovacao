@@ -55,7 +55,10 @@ export const NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
   ],
 }
 
-export const MOBILE_NAV_BY_ROLE: Partial<Record<UserRole, RoleNavItem[]>> = {
+export const MOBILE_NAV_BY_ROLE: Record<UserRole, RoleNavItem[]> = {
   student: NAV_BY_ROLE.student.filter((item) => ["dashboard", "questoes", "simulados", "redacoes"].includes(item.key)),
   manager: NAV_BY_ROLE.manager,
+  teacher: NAV_BY_ROLE.teacher,
+  parent: NAV_BY_ROLE.parent,
+  admin: NAV_BY_ROLE.admin,
 }
