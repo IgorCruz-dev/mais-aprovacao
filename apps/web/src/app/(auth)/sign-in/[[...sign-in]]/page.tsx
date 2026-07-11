@@ -29,21 +29,25 @@ export default function SignInPage() {
   const [loading, setLoading] = useState(false)
 
   const redirectUrl = sanitizeRedirectUrl(searchParams.get("redirect_url")) ?? "/"
-
   const postLoginUrl = redirectUrl === "/" ? "/dashboard" : redirectUrl
 
   async function finishSignIn() {
     if (!signIn) return
     const finalized = await signIn.finalize({
       navigate: async ({ decorateUrl }) => {
-        router.push(decorateUrl(postLoginUrl).toString())
+        const decorated = decorateUrl(postLoginUrl)
+        // decorateUrl pode retornar URL absoluta para Safari ITP — usar window.location nesses casos.
+        if (decorated.startsWith("http") && !decorated.startsWith(window.location.origin)) {
+          window.location.href = decorated
+        } else {
+          router.push(decorated)
+        }
       },
     })
     if (finalized.error) {
       setError(clerkErrorMessage(finalized.error))
-      return
     }
-    router.push(postLoginUrl)
+    // Não chamar router.push novamente: o navigate callback acima já cuidou disso.
   }
 
   async function handleSubmit(e: React.FormEvent) {

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useSignUp } from "@clerk/nextjs"
 import { GraduationCap, ChalkboardTeacher, UsersThree } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
+import { sanitizeRedirectUrl } from "@mais-aprovacao/utils"
 import { APROVA } from "@/components/student/StudentSurface"
 
 type SignupRole = "student" | "teacher" | "parent"
@@ -34,6 +35,9 @@ export default function SignUpPage() {
       ? requestedRole
       : "student"
   const roleLocked = requestedRole === "teacher" || requestedRole === "parent" || requestedRole === "student"
+
+  const redirectUrl = sanitizeRedirectUrl(searchParams.get("redirect_url")) ?? "/"
+  const postSignUpUrl = redirectUrl === "/" ? "/dashboard" : redirectUrl
 
   const [step, setStep] = useState<"form" | "verify">("form")
   const [role, setRole] = useState<SignupRole>(initialRole)
@@ -69,8 +73,16 @@ export default function SignUpPage() {
         return
       }
       setStep("verify")
-    } catch {
-      setError("Erro inesperado. Tente novamente.")
+    } catch (err) {
+      const clerkErr = err as { errors?: Array<{ longMessage?: string; message: string }> }
+      const first = clerkErr.errors?.[0]
+      setError(
+        first
+          ? clerkErrorMessage(first)
+          : err instanceof Error
+            ? err.message
+            : "Erro inesperado. Tente novamente."
+      )
     } finally {
       setLoading(false)
     }
@@ -92,10 +104,18 @@ export default function SignUpPage() {
         setError(clerkErrorMessage(finalized.error))
         return
       }
-      // O middleware roteia "/" para o dashboard da role.
-      router.push("/")
-    } catch {
-      setError("Erro inesperado. Tente novamente.")
+      // O middleware roteia "/dashboard" para o dashboard da role após o webhook processar.
+      router.push(postSignUpUrl)
+    } catch (err) {
+      const clerkErr = err as { errors?: Array<{ longMessage?: string; message: string }> }
+      const first = clerkErr.errors?.[0]
+      setError(
+        first
+          ? clerkErrorMessage(first)
+          : err instanceof Error
+            ? err.message
+            : "Erro inesperado. Tente novamente."
+      )
     } finally {
       setLoading(false)
     }
