@@ -32,8 +32,8 @@
 | Cache | Upstash Redis | - |
 | Filas | Upstash QStash | - |
 | Pagamento | Stripe (PIX + cartão) | - |
-| Deploy FE | Vercel | - |
-| Deploy BE | Railway | - |
+| Deploy FE | Localhost por enquanto | Vercel depois da validação comercial |
+| Deploy BE | Localhost por enquanto | Fly.io/Railway depois da validação comercial |
 | Email | Resend | - |
 
 ---
@@ -143,8 +143,8 @@ R2_ENDPOINT                   → https://{CLOUDFLARE_ACCOUNT_ID}.r2.cloudflares
 RESEND_API_KEY                → backend
 
 # URLs
-NEXT_PUBLIC_API_URL           → http://localhost:3001 (dev) / Railway URL (prod)
-WEB_URL                       → http://localhost:3000 (dev) / Vercel URL (prod)
+NEXT_PUBLIC_API_URL           → http://localhost:3001 (dev) / URL futura de deploy
+WEB_URL                       → http://localhost:3000 (dev) / URL futura de deploy
 
 # Conexão direta Postgres (psql, TablePlus, ferramentas de banco — não usado em runtime)
 DB-PASSWORD / HOST / PORT / DATABASE / USER → credenciais brutas do Supabase (apps/api/.env)

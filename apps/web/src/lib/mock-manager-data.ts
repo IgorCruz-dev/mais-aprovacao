@@ -363,3 +363,184 @@ export function getTeachersForPeriod(period: PeriodKey): TeacherRowForPeriod[] {
     essaysCorrected: t.essaysCorrected30d === 0 ? 0 : scaleFlowMetric(t.essaysCorrected30d, period, 400 + i),
   }))
 }
+
+// ── Análise de Alunos ─────────────────────────────────────────────────────────
+
+export const ESSAY_TEACHERS_WITH_COLOR = [
+  { name: "Marina Alves",   color: "#1B4DE4" },
+  { name: "Carlos Mendes",  color: "#E23030" },
+  { name: "Bruno Lima",     color: "#6C4BD9" },
+  { name: "Patrícia Neves", color: "#BE185D" },
+] as const
+
+export const STUDENT_ANALYSIS_TURMAS = [
+  "Turma A", "Turma B", "Turma C", "Turma D", "Turma E",
+] as const
+export type StudentAnalysisTurma = (typeof STUDENT_ANALYSIS_TURMAS)[number]
+
+export interface StudentAnalysisRow {
+  id: string
+  name: string
+  initial: string
+  turma: StudentAnalysisTurma
+  teacherEssay: string
+  teacherEssayColor: string
+  gradeNow: number
+  gradeStart: number
+  delta: number
+  engagementPct: number
+  engagementLevel: "alto" | "medio" | "baixo"
+  riskStatus: "ok" | "atencao" | "risco_alto"
+}
+
+export const ESSAY_GRADE_HISTORY = [
+  { month: "Jan", avg: 668, turmaA: 720, turmaB: 694, turmaC: 668, turmaD: 640, turmaE: 612 },
+  { month: "Fev", avg: 676, turmaB: 700, turmaA: 727, turmaC: 675, turmaD: 648, turmaE: 618 },
+  { month: "Mar", avg: 683, turmaA: 733, turmaB: 707, turmaC: 681, turmaD: 655, turmaE: 625 },
+  { month: "Abr", avg: 692, turmaA: 740, turmaB: 715, turmaC: 690, turmaD: 663, turmaE: 632 },
+  { month: "Mai", avg: 702, turmaA: 749, turmaB: 723, turmaC: 700, turmaD: 672, turmaE: 639 },
+  { month: "Jun", avg: 711, turmaA: 756, turmaB: 730, turmaC: 709, turmaD: 681, turmaE: 647 },
+  { month: "Jul", avg: 718, turmaA: 762, turmaB: 736, turmaC: 716, turmaD: 688, turmaE: 654 },
+] satisfies { month: string; avg: number; turmaA: number; turmaB: number; turmaC: number; turmaD: number; turmaE: number }[]
+
+const ANALYSIS_FIRST_NAMES = [
+  "Lucas", "Beatriz", "Gabriel", "Larissa", "Matheus", "Camila", "Rafael",
+  "Juliana", "Pedro", "Amanda", "Vitor", "Isabela", "Thiago", "Carolina",
+  "Bruno", "Fernanda", "André", "Mariana", "Felipe", "Letícia", "Diego",
+  "Natália", "Eduardo", "Priscila", "Rodrigo", "Vanessa", "Gustavo", "Aline",
+  "Marcos", "Sabrina", "Henrique", "Bianca", "Daniel", "Renata", "Carlos",
+  "Tatiana", "Leonardo", "Carla", "Alexandre", "Adriana",
+]
+const ANALYSIS_LAST_NAMES = [
+  "Silva", "Souza", "Oliveira", "Santos", "Pereira", "Costa", "Almeida",
+  "Ribeiro", "Carvalho", "Gomes", "Ferreira", "Lima", "Araújo", "Melo",
+  "Rodrigues", "Cruz", "Barbosa", "Cardoso", "Martins", "Nascimento",
+  "Azevedo", "Campos", "Moura", "Pinto", "Borges", "Rocha", "Nunes", "Vieira",
+]
+
+const rand3 = seedRandom(199)
+const _r    = () => rand3()
+const rand4 = seedRandom(337)
+
+export const ANALYSIS_STUDENTS: StudentAnalysisRow[] = Array.from({ length: 160 }, (_, i) => {
+  const firstName = ANALYSIS_FIRST_NAMES[Math.floor(_r() * ANALYSIS_FIRST_NAMES.length)]
+  const lastName  = ANALYSIS_LAST_NAMES[Math.floor(_r() * ANALYSIS_LAST_NAMES.length)]
+  const name = `${firstName} ${lastName}`
+
+  const turma = STUDENT_ANALYSIS_TURMAS[i % STUDENT_ANALYSIS_TURMAS.length]
+  const teacher = ESSAY_TEACHERS_WITH_COLOR[Math.floor(_r() * ESSAY_TEACHERS_WITH_COLOR.length)]
+
+  const gradeStart = 180 + Math.round(_r() * 520)           // 180–700
+  const rawDelta   = -130 + Math.round(_r() * 470)          // -130 a +340, maioria positivo
+  const gradeNow   = Math.max(0, Math.min(960, gradeStart + rawDelta))
+  const delta      = gradeNow - gradeStart
+
+  const engagementPct = 38 + Math.round(_r() * 57)          // 38–95
+  const engagementLevel: "alto" | "medio" | "baixo" =
+    engagementPct >= 80 ? "alto" : engagementPct >= 62 ? "medio" : "baixo"
+
+  const riskStatus: "ok" | "atencao" | "risco_alto" =
+    engagementPct < 52 || delta < -70
+      ? "risco_alto"
+      : engagementPct < 68 || delta < -20
+      ? "atencao"
+      : "ok"
+
+  return {
+    id: `sa-${String(i + 1).padStart(3, "0")}`,
+    name,
+    initial: firstName[0],
+    turma,
+    teacherEssay: teacher.name,
+    teacherEssayColor: teacher.color,
+    gradeNow,
+    gradeStart,
+    delta,
+    engagementPct,
+    engagementLevel,
+    riskStatus,
+  }
+})
+
+// ── Alunos em Risco ───────────────────────────────────────────────────────────
+
+export type RiskReason =
+  | "inatividade"
+  | "queda_nota"
+  | "baixo_engajamento"
+  | "ausencia_simulado"
+  | "sem_acesso"
+
+export const RISK_REASON_LABELS: Record<RiskReason, string> = {
+  inatividade:       "Inatividade >7 dias",
+  queda_nota:        "Queda na nota de redação",
+  baixo_engajamento: "Baixo engajamento",
+  ausencia_simulado: "Ausência em simulados",
+  sem_acesso:        "Sem acesso >14 dias",
+}
+
+export type RiskStudentRow = StudentAnalysisRow & {
+  riskLevel: Exclude<StudentAnalysisRow["riskStatus"], "ok">
+  primaryReason: RiskReason
+  allReasons: RiskReason[]
+  lastContactDays: number
+}
+
+// Histórico Jan–Jun; Jul é computado ao vivo a partir de RISK_STUDENTS
+// (base: 160 alunos; ~65% em risco pela distribuição gerada — cenário de cursinho em alerta)
+export const RISK_TREND_HISTORICAL = [
+  { month: "Jan", alto: 52, atencao: 33 },  // total 85
+  { month: "Fev", alto: 57, atencao: 36 },  // total 93
+  { month: "Mar", alto: 48, atencao: 30 },  // total 78 — melhora sazonal
+  { month: "Abr", alto: 60, atencao: 37 },  // total 97
+  { month: "Mai", alto: 66, atencao: 41 },  // total 107 — pico
+  { month: "Jun", alto: 58, atencao: 36 },  // total 94 — pequena recuperação
+  // Jul: alto=64, atencao=40 => total=104 (computado de RISK_STUDENTS ao vivo)
+] as const
+
+function _primaryReason(s: StudentAnalysisRow, tb: number): RiskReason {
+  if (s.delta < -70)          return "queda_nota"
+  if (s.engagementPct < 46)   return "sem_acesso"
+  if (s.engagementPct < 55)   return "inatividade"
+  if (s.delta < -20)          return "queda_nota"
+  return tb > 0.5 ? "ausencia_simulado" : "baixo_engajamento"
+}
+
+const ALL_REASONS: RiskReason[] = [
+  "inatividade", "queda_nota", "baixo_engajamento", "ausencia_simulado", "sem_acesso",
+]
+
+export const RISK_STUDENTS: RiskStudentRow[] = ANALYSIS_STUDENTS
+  .filter((s) => s.riskStatus !== "ok")
+  .map((s) => {
+    const tb  = rand4()
+    const r2  = rand4()
+    const r3  = rand4()
+    const r4  = rand4()
+    const r5  = rand4()
+    const r6  = rand4()
+
+    const primary    = _primaryReason(s, tb)
+    const secPool    = ALL_REASONS.filter((x) => x !== primary)
+    const secondary  = secPool[Math.floor(r2 * secPool.length)]
+    const hasSecond  = r3 > 0.38
+    const hasThird   = r4 > 0.70
+    const thirdPool  = ALL_REASONS.filter((x) => x !== primary && x !== secondary)
+    const third      = thirdPool[Math.floor(r5 * thirdPool.length)]
+
+    const allReasons: RiskReason[] = [primary]
+    if (hasSecond) allReasons.push(secondary)
+    if (hasThird && third) allReasons.push(third)
+
+    const lastContactDays = s.riskStatus === "risco_alto"
+      ? 8  + Math.round(r6 * 22)   // 8–30 dias
+      : 3  + Math.round(r6 * 12)   // 3–15 dias
+
+    return {
+      ...s,
+      riskLevel: s.riskStatus as Exclude<typeof s.riskStatus, "ok">,
+      primaryReason: primary,
+      allReasons,
+      lastContactDays,
+    }
+  })

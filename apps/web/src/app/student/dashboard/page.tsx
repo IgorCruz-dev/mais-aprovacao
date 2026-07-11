@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import {
   Fire, ShieldStar, Star, Trophy, VideoCamera, Play,
-  Books, Exam, PencilLine, Warning,
+  Books, Exam, PencilLine, Warning, Radio,
 } from "@phosphor-icons/react"
 import type { Icon as PhosphorIcon } from "@phosphor-icons/react"
 import {
@@ -16,6 +16,7 @@ import {
   STUDENT, CURRENT_LESSON, RACE, RACE_MILESTONES,
   RANKING_PODIUM, CLASS_ACTIVITY, EXAMS,
 } from "@/lib/mock-data"
+import { AULOES, type Aulao } from "@/lib/mock-teacher-data"
 
 // ─── Saudação dinâmica ─────────────────────────────────────────────────────────
 
@@ -277,13 +278,48 @@ function RecentExams() {
   )
 }
 
+// ─── Banner: aulão ao vivo ─────────────────────────────────────────────────────
+
+function LiveAulaoBanner({ aulao }: { aulao: Aulao }) {
+  return (
+    <Link
+      href={`/student/auloes/${aulao.id}`}
+      className="flex items-center gap-3 rounded-[18px] px-4 py-3 transition-transform hover:scale-[1.005]"
+      style={{ background: "rgba(226,48,48,0.07)", border: "1.5px solid rgba(226,48,48,0.28)" }}
+    >
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full" style={{ background: APROVA.error }} />
+      </span>
+      <span
+        className="shrink-0 rounded-full px-2.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-[0.12em] text-white"
+        style={{ background: APROVA.error }}
+      >
+        Ao vivo
+      </span>
+      <Radio size={14} weight="fill" color={APROVA.error} />
+      <p className="min-w-0 flex-1 truncate text-[13px] font-bold" style={{ color: APROVA.ink }}>
+        {aulao.title}
+      </p>
+      <span className="shrink-0 text-[12px] font-extrabold" style={{ color: APROVA.error }}>
+        Entrar agora →
+      </span>
+    </Link>
+  )
+}
+
 // ─── Página ────────────────────────────────────────────────────────────────────
+
+const LIVE_AULAO = AULOES.find((a) => a.status === "ao_vivo") ?? null
 
 export default function DashboardPage() {
   const { greeting, atRisk } = useGreeting()
   return (
     <RevealGroup className="mx-auto max-w-[1240px] px-4 pt-4 lg:px-8 lg:pt-7">
       <RevealItem className="mb-3 lg:mb-5"><GreetingHero greeting={greeting} atRisk={atRisk} /></RevealItem>
+      {LIVE_AULAO && (
+        <RevealItem className="mb-3 lg:mb-4"><LiveAulaoBanner aulao={LIVE_AULAO} /></RevealItem>
+      )}
 
       {/* mobile: flex com ordem por prioridade · desktop: 2 colunas independentes */}
       <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:gap-5">

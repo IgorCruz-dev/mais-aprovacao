@@ -864,8 +864,195 @@ export function getUpcomingAgenda(n: number): AgendaItem[] {
     .slice(0, n)
 }
 
+// ─── Aulões ───────────────────────────────────────────────────────────────────
+
+export type AulaoStatus = "ao_vivo" | "agendado" | "encerrado"
+
+export interface Aulao {
+  id: string
+  title: string
+  subject: string
+  turmas: string[]
+  teacherName: string
+  teacherInitial: string
+  teacherColor: string
+  status: AulaoStatus
+  scheduledAt: string
+  durationMin: number
+  enrolledCount: number
+  viewersNow: number | null
+  attendanceCount: number | null
+  attendancePct: number | null
+  recordingUrl: string | null
+}
+
+export const AULOES: Aulao[] = [
+  {
+    id: "ao-vivo",
+    title: "Redação — Estrutura dissertativo-argumentativa",
+    subject: "Redação",
+    turmas: ["ENEM Extensivo", "UFU Intensivo"],
+    teacherName: "Prof. Ricardo Alves",
+    teacherInitial: "R",
+    teacherColor: "#1B4DE4",
+    status: "ao_vivo",
+    scheduledAt: "2026-07-08T19:00:00",
+    durationMin: 90,
+    enrolledCount: 85,
+    viewersNow: 72,
+    attendanceCount: null,
+    attendancePct: null,
+    recordingUrl: null,
+  },
+  {
+    id: "aulao-jul-09",
+    title: "Atualidades — Temas de Redação ENEM 2026",
+    subject: "Redação",
+    turmas: ["ENEM Extensivo"],
+    teacherName: "Prof. Ricardo Alves",
+    teacherInitial: "R",
+    teacherColor: "#1B4DE4",
+    status: "agendado",
+    scheduledAt: "2026-07-09T19:00:00",
+    durationMin: 90,
+    enrolledCount: 62,
+    viewersNow: null,
+    attendanceCount: null,
+    attendancePct: null,
+    recordingUrl: null,
+  },
+  {
+    id: "aulao-jul-12",
+    title: "Matemática — Geometria Analítica e Funções",
+    subject: "Matemática",
+    turmas: ["UFU Intensivo", "UEG Modular"],
+    teacherName: "Prof.ª Carla Mendes",
+    teacherInitial: "C",
+    teacherColor: "#0FA968",
+    status: "agendado",
+    scheduledAt: "2026-07-12T10:00:00",
+    durationMin: 120,
+    enrolledCount: 74,
+    viewersNow: null,
+    attendanceCount: null,
+    attendancePct: null,
+    recordingUrl: null,
+  },
+  {
+    id: "aulao-jul-15",
+    title: "Biologia — Genética e Hereditariedade",
+    subject: "Biologia",
+    turmas: ["ENEM Extensivo", "UFU Intensivo"],
+    teacherName: "Prof. Marcos Santana",
+    teacherInitial: "M",
+    teacherColor: "#6C4BD9",
+    status: "agendado",
+    scheduledAt: "2026-07-15T19:00:00",
+    durationMin: 90,
+    enrolledCount: 85,
+    viewersNow: null,
+    attendanceCount: null,
+    attendancePct: null,
+    recordingUrl: null,
+  },
+  {
+    id: "aulao-jul-03",
+    title: "Interpretação de Texto — Tipos e Gêneros Textuais",
+    subject: "Português",
+    turmas: ["ENEM Extensivo"],
+    teacherName: "Prof. Ricardo Alves",
+    teacherInitial: "R",
+    teacherColor: "#1B4DE4",
+    status: "encerrado",
+    scheduledAt: "2026-07-03T19:00:00",
+    durationMin: 90,
+    enrolledCount: 85,
+    viewersNow: null,
+    attendanceCount: 78,
+    attendancePct: 92,
+    recordingUrl: "#",
+  },
+  {
+    id: "aulao-jun-26",
+    title: "Português — Concordância Verbal e Nominal",
+    subject: "Português",
+    turmas: ["ENEM Extensivo", "UEG Modular"],
+    teacherName: "Prof. Ricardo Alves",
+    teacherInitial: "R",
+    teacherColor: "#1B4DE4",
+    status: "encerrado",
+    scheduledAt: "2026-06-26T19:00:00",
+    durationMin: 90,
+    enrolledCount: 85,
+    viewersNow: null,
+    attendanceCount: 65,
+    attendancePct: 76,
+    recordingUrl: "#",
+  },
+  {
+    id: "aulao-jun-19",
+    title: "Matemática — Funções do 1.º e 2.º Grau",
+    subject: "Matemática",
+    turmas: ["UFU Intensivo", "UEG Modular"],
+    teacherName: "Prof.ª Carla Mendes",
+    teacherInitial: "C",
+    teacherColor: "#0FA968",
+    status: "encerrado",
+    scheduledAt: "2026-06-19T14:00:00",
+    durationMin: 120,
+    enrolledCount: 90,
+    viewersNow: null,
+    attendanceCount: 82,
+    attendancePct: 91,
+    recordingUrl: "#",
+  },
+  {
+    id: "aulao-jun-12",
+    title: "Química — Estequiometria e Cálculos Químicos",
+    subject: "Química",
+    turmas: ["UFU Intensivo"],
+    teacherName: "Prof. Marcos Santana",
+    teacherInitial: "M",
+    teacherColor: "#6C4BD9",
+    status: "encerrado",
+    scheduledAt: "2026-06-12T19:00:00",
+    durationMin: 90,
+    enrolledCount: 48,
+    viewersNow: null,
+    attendanceCount: 41,
+    attendancePct: 85,
+    recordingUrl: "#",
+  },
+  {
+    id: "aulao-jun-05",
+    title: "Física — Cinemática e Dinâmica",
+    subject: "Física",
+    turmas: ["UFU Intensivo", "UEG Modular"],
+    teacherName: "Prof. Marcos Santana",
+    teacherInitial: "M",
+    teacherColor: "#6C4BD9",
+    status: "encerrado",
+    scheduledAt: "2026-06-05T19:00:00",
+    durationMin: 90,
+    enrolledCount: 82,
+    viewersNow: null,
+    attendanceCount: 76,
+    attendancePct: 93,
+    recordingUrl: "#",
+  },
+]
+
 export function getDashboardAlerts(): Array<{ tone: "warning" | "error" | "info"; text: string; href: string; actionLabel: string }> {
   const alerts: Array<{ tone: "warning" | "error" | "info"; text: string; href: string; actionLabel: string }> = []
+  const liveAulao = AULOES.find((a) => a.status === "ao_vivo")
+  if (liveAulao) {
+    alerts.push({
+      tone: "error",
+      text: `Aulão ao vivo agora: "${liveAulao.title}" — ${liveAulao.viewersNow} participantes conectados.`,
+      href: `/teacher/auloes/${liveAulao.id}`,
+      actionLabel: "Entrar na sala",
+    })
+  }
   const overSlaCount = REDACOES.filter((r) => r.overSla).length
   if (overSlaCount > 0) {
     alerts.push({
